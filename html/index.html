@@ -18,6 +18,7 @@
 		#canvas-box { margin-top: 10px; }
 		
 		button { padding: 0.375rem 0.75rem; border: 1px solid #0d6efd; border-radius: 0.375rem; }
+		button:disabled { opacity: 0.65; }
 		button.primary { color: #fff; background-color: #0d6efd; }
 		button.primary:hover { color: #fff; border-color: #0b5ed7; background-color: #0b5ed7; }
 		button.secondary { color: #fff; background-color: #6c757d; }
@@ -38,8 +39,8 @@
 			<legend>蓝牙</legend>
 			<div style="display: flex; justify-content: space-between;">
 				<div>
-					<button id="connectbutton" type="button" class="primary" onclick="preConnect();">连接</button>
-					<button id="reconnectbutton" type="button" class="secondary" onclick="reConnect();">重连</button>
+					<button id="connectbutton" type="button" class="primary" onclick="preConnect()">连接</button>
+					<button id="reconnectbutton" type="button" class="secondary" onclick="reConnect()">重连</button>
 				</div>
 				<div>
 					<label for="epddriver">驱动</label>
@@ -50,7 +51,7 @@
 					</select>
 					<label for="epdpins">引脚</label>
 					<input id="epdpins" type="text" value="">
-					<button id="setDriverbutton" type="button" class="primary" onclick="setDriver();">确认</button>
+					<button id="setDriverbutton" type="button" class="primary" onclick="setDriver()">确认</button>
 				</div>
 			</div>
 		</fieldset>
@@ -59,13 +60,13 @@
 			<legend>传图</legend>
 			<div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
 				<div>
-					<button id="clearcanvasbutton" type="button" class="secondary" onclick="clear_canvas();">清除画布</button>
-					<button id="sendimgbutton" type="button" class="primary" class="primary" onclick="sendimg();">发送图片</button>
+					<button id="clearcanvasbutton" type="button" class="secondary" onclick="clear_canvas()">清除画布</button>
+					<button id="sendimgbutton" type="button" class="primary" onclick="sendimg()">发送图片</button>
 				</div>
 				<div>
-					<button id="clearscreenbutton" type="button" class="secondary" onclick="clearscreen();">清除屏幕</button>
+					<button id="clearscreenbutton" type="button" class="secondary" onclick="clearscreen()">清除屏幕</button>
 					<input type="text" id="cmdTXT" value="">
-					<button id="sendcmdbutton" type="button" class="primary" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">发送命令</button>
+					<button id="sendcmdbutton" type="button" class="primary" onclick="sendcmd()">发送命令</button>
 				</div>
 			</div>
 			<div style="font-size: 85%; color: #666; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dotted #AAA;"><b>状态：</b><span id="status"></span></div>
@@ -93,7 +94,7 @@
 						<label for="threshold">阈值</label>
 						<input type="number" max="255" min="0" value="125" id="threshold" onchange="update_image()">
 					</div>
-					<button type="button" class="secondary" onclick="document.getElementById('log').innerHTML = '';">清空日志</button>
+					<button type="button" class="secondary" onclick="clearLog()">清空日志</button>
 				</div>
 				<div style="display: flex; justify-content: space-between;">
 					<canvas id="canvas" width="400" height="300" style="border: black solid 1px;"></canvas>
