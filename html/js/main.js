@@ -9,18 +9,18 @@ let startTime;
 
 const MAX_PACKET_SIZE = 20;
 const EpdCmd = {
-  SET_PINS:  0x00,
-  INIT:      0x01,
-  CLEAR:     0x02,
-  SEND_CMD:  0x03,
+  SET_PINS: 0x00,
+  INIT: 0x01,
+  CLEAR: 0x02,
+  SEND_CMD: 0x03,
   SEND_DATA: 0x04,
-  DISPLAY:   0x05,
-  SLEEP:     0x06,
+  DISPLAY: 0x05,
+  SLEEP: 0x06,
 
   SET_CONFIG: 0x90,
-  SYS_RESET:  0x91,
-  SYS_SLEEP:  0x92,
-  CFG_ERASE:  0x99,
+  SYS_RESET: 0x91,
+  SYS_SLEEP: 0x92,
+  CFG_ERASE: 0x99,
 };
 
 function resetVariables() {
@@ -73,7 +73,7 @@ async function epdWrite(cmd, data) {
   await write(EpdCmd.SEND_CMD, [cmd]);
   for (let i = 0; i < data.length; i += chunkSize) {
     let currentTime = (new Date().getTime() - startTime) / 1000.0;
-    setStatus(`命令：0x${cmd.toString(16)}, 数据块: ${chunkIdx+1}/${count+1}, 总用时: ${currentTime}s`);
+    setStatus(`命令：0x${cmd.toString(16)}, 数据块: ${chunkIdx + 1}/${count + 1}, 总用时: ${currentTime}s`);
     await write(EpdCmd.SEND_DATA, data.slice(i, i + chunkSize));
     chunkIdx++;
   }
@@ -85,7 +85,7 @@ async function setDriver() {
 }
 
 async function clearscreen() {
-  if(confirm('确认清除屏幕内容?')) {
+  if (confirm('确认清除屏幕内容?')) {
     await write(EpdCmd.CLEAR);
   }
 }
@@ -115,7 +115,7 @@ function getImageData(canvas, driver, mode) {
       if (mode.startsWith('bwr')) {
         data.push(...canvas2bytes(canvas, 'red'));
       } else {
-        const data1= 'F'.repeat(data.length);
+        const data1 = 'F'.repeat(data.length);
         data.push(...data1);
       }
     }
@@ -181,7 +181,8 @@ async function preConnect() {
     try {
       bleDevice = await navigator.bluetooth.requestDevice({
         optionalServices: ['62750001-d828-918d-fb46-b6c11c675aec'],
-        acceptAllDevices: true
+        // acceptAllDevices: true
+        filters: [{ namePrefix: ['NRF_EPD_'] }]
       });
     } catch (e) {
       if (e.message) addLog(e.message);
@@ -241,8 +242,8 @@ function addLog(logTXT) {
   const log = document.getElementById("log");
   const now = new Date();
   const time = String(now.getHours()).padStart(2, '0') + ":" +
-         String(now.getMinutes()).padStart(2, '0') + ":" +
-         String(now.getSeconds()).padStart(2, '0') + " ";
+    String(now.getMinutes()).padStart(2, '0') + ":" +
+    String(now.getSeconds()).padStart(2, '0') + " ";
   log.innerHTML += '<span class="time">' + time + '</span>' + logTXT + '<br>';
   log.scrollTop = log.scrollHeight;
   while ((log.innerHTML.match(/<br>/g) || []).length > 20) {
@@ -274,7 +275,7 @@ function intToHex(intIn) {
   return stringOut.substring(2, 4) + stringOut.substring(0, 2);
 }
 
-async function update_image () {
+async function update_image() {
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
 
@@ -287,7 +288,7 @@ async function update_image () {
     image.src = document.getElementById('demo-img').src;
   }
 
-  image.onload = function(event) {
+  image.onload = function (event) {
     URL.revokeObjectURL(this.src);
     ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
     convert_dithering()
@@ -295,7 +296,7 @@ async function update_image () {
 }
 
 function clear_canvas() {
-  if(confirm('确认清除画布内容?')) {
+  if (confirm('确认清除画布内容?')) {
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
