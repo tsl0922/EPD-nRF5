@@ -45,7 +45,7 @@ async function handleError(error) {
   }
 }
 
-async function write(cmd, data) {
+async function write(cmd, data, withResponse=true) {
   if (!epdCharacteristic) {
     addLog("服务不可用，请检查蓝牙连接");
     return;
@@ -60,13 +60,18 @@ async function write(cmd, data) {
     throw new Error("BLE packet too large!");
   }
   addLog(`<span class="action">⇑</span> ${bytes2hex(payload)}`);
-  await epdCharacteristic.writeValue(Uint8Array.from(payload));
+  if (withResponse)
+    await epdCharacteristic.writeValueWithResponse(Uint8Array.from(payload));
+  else
+    await epdCharacteristic.writeValueWithoutResponse(Uint8Array.from(payload));
 }
 
 async function epdWrite(cmd, data) {
   const chunkSize = MAX_PACKET_SIZE - 1;
   const count = Math.round(data.length / chunkSize);
+  const interleavedCount = document.getElementById('interleavedcount').value;
   let chunkIdx = 0;
+  let noReplyCount = interleavedCount;
 
   if (typeof data == 'string') data = hex2bytes(data);
 
@@ -74,7 +79,13 @@ async function epdWrite(cmd, data) {
   for (let i = 0; i < data.length; i += chunkSize) {
     let currentTime = (new Date().getTime() - startTime) / 1000.0;
     setStatus(`命令：0x${cmd.toString(16)}, 数据块: ${chunkIdx+1}/${count+1}, 总用时: ${currentTime}s`);
-    await write(EpdCmd.SEND_DATA, data.slice(i, i + chunkSize));
+    if (noReplyCount > 0) {
+      await write(EpdCmd.SEND_DATA, data.slice(i, i + chunkSize), false);
+      noReplyCount--;
+    } else {
+      await write(EpdCmd.SEND_DATA, data.slice(i, i + chunkSize), true);
+      noReplyCount = interleavedCount;
+    }
     chunkIdx++;
   }
 }

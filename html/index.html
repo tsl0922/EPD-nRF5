@@ -62,6 +62,8 @@
 				<div>
 					<button id="clearcanvasbutton" type="button" class="secondary" onclick="clear_canvas()">清除画布</button>
 					<button id="sendimgbutton" type="button" class="primary" onclick="sendimg()">发送图片</button>
+					<label for="interleavedcount" style="margin-left: 20px;">确认间隔</label>
+					<input type="number" id="interleavedcount" value="50">
 				</div>
 				<div>
 					<button id="clearscreenbutton" type="button" class="secondary" onclick="clearscreen()">清除屏幕</button>
@@ -107,6 +109,7 @@
 			<ul>
 				<li><b>驱动选择：</b>黑白屏可尝试 EPD_4in2 / EPD_4in2_V2, 三色屏选择 EPD_4in2b_V2 (选错驱动可能会导致任何未知的异常，重启即可恢复）</li>
 				<li><b>引脚配置：</b>格式为十六进制，顺序：MOSI/SCLK/CS/DC/ST/BUSY/BS，必须按此顺序包含完整的 7 个引脚配置（没有用到的引脚可配置为 <code>FF</code>）</li>
+				<li><b>确认间隔: </b>这个间隔指的是数据包数量间隔，即发送此数量的不确认响应的数据包后才发送一次需确认响应的数据包。加大此值可优化传图速度，但是丢包风险也更大（你可能会发现图片有部分位置显示不正常，此时需调小这个值）。
 				<li>
 					<b>指令列表（指令和参数全部要使用十六进制）：</b>
 					<ul>
