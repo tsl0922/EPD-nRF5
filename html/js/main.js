@@ -122,13 +122,8 @@ function getImageData(canvas, driver, mode) {
     return canvas2gray(canvas);
   } else {
     let data = canvas2bytes(canvas, 'bw');
-    if (driver === '03') {
-      if (mode.startsWith('bwr')) {
-        data.push(...canvas2bytes(canvas, 'red'));
-      } else {
-        const data1= 'F'.repeat(data.length);
-        data.push(...data1);
-      }
+    if (driver === '03' && mode.startsWith('bwr')) {
+      data.push(...canvas2bytes(canvas, 'red'));
     }
     return data;
   }
@@ -140,11 +135,11 @@ async function sendimg() {
   const driver = document.getElementById("epddriver").value;
   const mode = document.getElementById('dithering').value;
   const imgArray = getImageData(canvas, driver, mode);
-  const bwArrLen = canvas.width * canvas.height / 8;
+  const ramSize = canvas.width * canvas.height / 8;
 
-  if (imgArray.length == bwArrLen * 2) {
-    await epdWrite(0x10, imgArray.slice(0, bwArrLen));
-    await epdWrite(0x13, imgArray.slice(bwArrLen));
+  if (imgArray.length == ramSize * 2) {
+    await epdWrite(0x10, imgArray.slice(0, ramSize));
+    await epdWrite(0x13, imgArray.slice(ramSize));
   } else {
     await epdWrite(driver === "03" ? 0x10 : 0x13, imgArray);
   }
