@@ -72,6 +72,11 @@ void DEV_SPI_WriteByte(UBYTE value)
     nrf_drv_spi_transfer(&spi, &value, 1, NULL, 0);
 }
 
+void DEV_SPI_WriteBytes(UBYTE *value, UBYTE len)
+{
+    nrf_drv_spi_transfer(&spi, value, len, NULL, 0);
+}
+
 UBYTE DEV_SPI_ReadByte(void)
 {
     UBYTE value;

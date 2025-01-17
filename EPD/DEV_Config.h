@@ -51,6 +51,7 @@ UBYTE DEV_Module_Init(void);
 void DEV_Module_Exit(void);
 
 void DEV_SPI_WriteByte(UBYTE value);
+void DEV_SPI_WriteBytes(UBYTE *value, UBYTE len);
 UBYTE DEV_SPI_ReadByte(void);
 
 #endif

@@ -47,6 +47,7 @@ void EPD_4IN2_V2_Sleep(void);
 
 void EPD_4IN2_V2_SendCommand(UBYTE Reg);
 void EPD_4IN2_V2_SendData(UBYTE Data);
+void EPD_4IN2_V2_SendData2(UBYTE *Data, UBYTE Len);
 void EPD_4IN2_V2_TurnOnDisplay(void);
 
 #endif

@@ -75,7 +75,7 @@ typedef struct
     void (*init)(void);                               /**< Initialize the e-Paper register */
     void (*clear)(void);                              /**< Clear screen */
     void (*send_command)(UBYTE Reg);                  /**< send command */
-    void (*send_data)(UBYTE Data);                    /**< send data */
+    void (*send_data)(UBYTE *Data, UBYTE Len);        /**< send data */
     void (*display)(void);                            /**< Sends the image buffer in RAM to e-Paper and displays */
     void (*sleep)(void);                              /**< Enter sleep mode */
 } epd_driver_t;

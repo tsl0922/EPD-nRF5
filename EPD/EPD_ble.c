@@ -36,13 +36,13 @@ static pstorage_handle_t     m_flash_handle;
 /** EPD drivers */
 static epd_driver_t epd_drivers[] = {
     {EPD_DRIVER_4IN2, EPD_4IN2_Init, EPD_4IN2_Clear, 
-     EPD_4IN2_SendCommand, EPD_4IN2_SendData,
+     EPD_4IN2_SendCommand, EPD_4IN2_SendData2,
      EPD_4IN2_TurnOnDisplay, EPD_4IN2_Sleep},
     {EPD_DRIVER_4IN2_V2, EPD_4IN2_V2_Init, EPD_4IN2_V2_Clear,
-     EPD_4IN2_V2_SendCommand, EPD_4IN2_V2_SendData,
+     EPD_4IN2_V2_SendCommand, EPD_4IN2_V2_SendData2,
      EPD_4IN2_V2_TurnOnDisplay, EPD_4IN2_V2_Sleep},
     {EPD_DRIVER_4IN2B_V2, EPD_4IN2B_V2_Init, EPD_4IN2B_V2_Clear,
-     EPD_4IN2B_V2_SendCommand, EPD_4IN2B_V2_SendData,
+     EPD_4IN2B_V2_SendCommand, EPD_4IN2B_V2_SendData2,
      EPD_4IN2B_V2_TurnOnDisplay, EPD_4IN2B_V2_Sleep},
 };
 
@@ -166,10 +166,7 @@ static void epd_service_process(ble_epd_t * p_epd, uint8_t * p_data, uint16_t le
           break;
 
       case EPD_CMD_SEND_DATA:
-          for (UWORD i = 0; i < length - 1; i++)
-          {
-              p_epd->driver->send_data(p_data[i + 1]);
-          }
+          p_epd->driver->send_data(&p_data[1], length - 1);
           break;
 
       case EPD_CMD_DISPLAY:

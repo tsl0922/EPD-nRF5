@@ -70,6 +70,13 @@ void EPD_4IN2_V2_SendData(UBYTE Data)
     DEV_Digital_Write(EPD_CS_PIN, 1);
 }
 
+void EPD_4IN2_V2_SendData2(UBYTE *Data, UBYTE Len)
+{
+    DEV_Digital_Write(EPD_DC_PIN, 1);
+    DEV_Digital_Write(EPD_CS_PIN, 0);
+    DEV_SPI_WriteBytes(Data, Len);
+    DEV_Digital_Write(EPD_CS_PIN, 1);
+}
 /******************************************************************************
 function :	Wait until the busy_pin goes LOW
 parameter:
