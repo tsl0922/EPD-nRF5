@@ -132,8 +132,16 @@ static void draw4Gray(void)
         }
     }
 
+	// Load LUT from register
+    EPD_4IN2_SendCommand(0x00);
+    EPD_4IN2_SendData(0x3f);
+	
     EPD_4IN2_4Gray_lut();
     EPD_4IN2_TurnOnDisplay();
+	
+	// Load LUT from OTP
+    EPD_4IN2_SendCommand(0x00);
+    EPD_4IN2_SendData(0x1f);
 }
 
 void EPD_4in2_test(void)
@@ -145,13 +153,10 @@ void EPD_4in2_test(void)
     DEV_Delay_ms(500);
 
     drawNormal();
-    DEV_Delay_ms(3000);
-
-    EPD_4IN2_Clear();
-    DEV_Delay_ms(500);
+    DEV_Delay_ms(1000);
 
     draw4Gray();
-    DEV_Delay_ms(500);
+    DEV_Delay_ms(1000);
     
     EPD_4IN2_Sleep();
     DEV_Delay_ms(500);
