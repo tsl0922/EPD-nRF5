@@ -18,45 +18,21 @@
 #include "nrf_soc.h"
 #include "nrf_log.h"
 #include "pstorage.h"
-#include "EPD_4in2.h"
-#include "EPD_4in2_V2.h"
-#include "EPD_4in2b_V2.h"
 #include "EPD_ble.h"
 
-#define BLE_EPD_CONFIG_ADDR                (NRF_FICR->CODEPAGESIZE * (NRF_FICR->CODESIZE - 1)) // Last page of the flash
+#define EPD_CFG_DEFAULT {0x05, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01, 0x07}
+
+#ifndef EPD_CFG_DEFAULT
+#define EPD_CFG_DEFAULT {0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x03, 0x09, 0x03}
+#endif
+
 #define BLE_EPD_BASE_UUID                  {{0XEC, 0X5A, 0X67, 0X1C, 0XC1, 0XB6, 0X46, 0XFB, \
                                              0X8D, 0X91, 0X28, 0XD8, 0X22, 0X36, 0X75, 0X62}}
 #define BLE_UUID_EPD_CHARACTERISTIC        0x0002
 
-#define ARRAY_SIZE(arr)                    (sizeof(arr) / sizeof((arr)[0]))
 #define EPD_CONFIG_SIZE                    (sizeof(epd_config_t) / sizeof(uint8_t))
 
 static pstorage_handle_t     m_flash_handle;
-
-/** EPD drivers */
-static epd_driver_t epd_drivers[] = {
-    {EPD_DRIVER_4IN2, EPD_4IN2_Init, EPD_4IN2_Clear, 
-     EPD_4IN2_SendCommand, EPD_4IN2_SendData2,
-     EPD_4IN2_TurnOnDisplay, EPD_4IN2_Sleep},
-    {EPD_DRIVER_4IN2_V2, EPD_4IN2_V2_Init, EPD_4IN2_V2_Clear,
-     EPD_4IN2_V2_SendCommand, EPD_4IN2_V2_SendData2,
-     EPD_4IN2_V2_TurnOnDisplay, EPD_4IN2_V2_Sleep},
-    {EPD_DRIVER_4IN2B_V2, EPD_4IN2B_V2_Init, EPD_4IN2B_V2_Clear,
-     EPD_4IN2B_V2_SendCommand, EPD_4IN2B_V2_SendData2,
-     EPD_4IN2B_V2_TurnOnDisplay, EPD_4IN2B_V2_Sleep},
-};
-
-static epd_driver_t *epd_driver_get(uint8_t id)
-{
-    for (uint8_t i = 0; i < ARRAY_SIZE(epd_drivers); i++)
-    {
-      if (epd_drivers[i].id == id)
-      {
-          return &epd_drivers[i];
-      }
-    }
-    return NULL;
-}
 
 static uint32_t epd_config_load(epd_config_t *cfg)
 {
@@ -90,7 +66,6 @@ static void on_connect(ble_epd_t * p_epd, ble_evt_t * p_ble_evt)
         nrf_gpio_pin_toggle(p_epd->config.led_pin);
     }
     p_epd->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-    DEV_Module_Init();
 }
 
 
@@ -107,15 +82,17 @@ static void on_disconnect(ble_epd_t * p_epd, ble_evt_t * p_ble_evt)
         nrf_gpio_pin_toggle(p_epd->config.led_pin);
     }
     p_epd->conn_handle = BLE_CONN_HANDLE_INVALID;
-    DEV_Module_Exit();
 }
 
 static void epd_service_process(ble_epd_t * p_epd, uint8_t * p_data, uint16_t length)
 {
     if (p_data == NULL || length <= 0) return;
     NRF_LOG_PRINTF("[EPD]: CMD=0x%02x, LEN=%d\n", p_data[0], length);
-
-    uint32_t    err_code;
+	
+	if (p_epd->epd_cmd_cb != NULL) {
+        if (p_epd->epd_cmd_cb(p_data[0], length > 1 ? &p_data[1] : NULL, length - 1))
+            return;
+    }
 
     switch (p_data[0])
     {
@@ -131,24 +108,19 @@ static void epd_service_process(ble_epd_t * p_epd, uint8_t * p_data, uint16_t le
           EPD_RST_PIN = p_epd->config.rst_pin = p_data[5];
           EPD_BUSY_PIN = p_epd->config.busy_pin = p_data[6];
           EPD_BS_PIN = p_epd->config.bs_pin = p_data[7];
-          err_code = epd_config_save(&p_epd->config);
-          NRF_LOG_PRINTF("epd_config_save: %d\n", err_code);
-          
-          NRF_LOG_PRINTF("[EPD]: MOSI=0x%02x SCLK=0x%02x CS=0x%02x DC=0x%02x RST=0x%02x BUSY=0x%02x BS=0x%02x\n",
-                         EPD_MOSI_PIN, EPD_SCLK_PIN, EPD_CS_PIN, EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_BS_PIN);
+          epd_config_save(&p_epd->config);
+
           DEV_Module_Init();
           break;
 
       case EPD_CMD_INIT:
           if (length > 1)
           {
-              epd_driver_t *driver = epd_driver_get(p_data[1]);
-              if (driver != NULL)
+              if (epd_driver_set(p_data[1]))
               {
-                  p_epd->driver = driver;
-                  p_epd->config.driver_id = driver->id;
-                  err_code = epd_config_save(&p_epd->config);
-                  NRF_LOG_PRINTF("epd_config_save: %d\n", err_code);
+                  p_epd->driver = epd_driver_get();
+                  p_epd->config.driver_id = p_epd->driver->id;
+                  epd_config_save(&p_epd->config);
               }
           }
 
@@ -343,7 +315,7 @@ static void epd_config_init(ble_epd_t * p_epd)
     // write default config
     if (is_empty_config)
     {
-        uint8_t cfg[] = {0x05, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01, 0x07};
+        uint8_t cfg[] = EPD_CFG_DEFAULT;
         memcpy(&p_epd->config, cfg, ARRAY_SIZE(cfg));
         epd_config_save(&p_epd->config);
     }
@@ -357,11 +329,8 @@ static void epd_config_init(ble_epd_t * p_epd)
     EPD_BUSY_PIN = p_epd->config.busy_pin;
     EPD_BS_PIN = p_epd->config.bs_pin;
 
-    p_epd->driver = epd_driver_get(p_epd->config.driver_id);
-    if (p_epd->driver == NULL)
-    {
-        p_epd->driver = &epd_drivers[0];
-    }
+    epd_driver_set(p_epd->config.driver_id);
+	p_epd->driver = epd_driver_get();
 }
 
 void ble_epd_sleep_prepare(ble_epd_t * p_epd)
@@ -387,12 +356,13 @@ static void pstorage_callback(pstorage_handle_t * p_handle,
     NRF_LOG_PRINTF("pstorage_callback: op_code=%d, result=%d\n", op_code, result);
 }
 
-uint32_t ble_epd_init(ble_epd_t * p_epd)
+uint32_t ble_epd_init(ble_epd_t * p_epd, epd_callback_t cmd_cb)
 {
     if (p_epd == NULL)
     {
         return NRF_ERROR_NULL;
     }
+	p_epd->epd_cmd_cb = cmd_cb;
 
     // Initialize the service structure.
     p_epd->conn_handle             = BLE_CONN_HANDLE_INVALID;

@@ -17,6 +17,8 @@ const EpdCmd = {
   DISPLAY:   0x05,
   SLEEP:     0x06,
 
+  SET_TIME:  0x20,
+
   SET_CONFIG: 0x90,
   SYS_RESET:  0x91,
   SYS_SLEEP:  0x92,
@@ -31,7 +33,7 @@ function resetVariables() {
 }
 
 async function handleError(error) {
-  console.log(error);
+  console.error(error);
   resetVariables();
   if (bleDevice == null)
     return;
@@ -48,22 +50,30 @@ async function handleError(error) {
 async function write(cmd, data, withResponse=true) {
   if (!epdCharacteristic) {
     addLog("服务不可用，请检查蓝牙连接");
-    return;
+    return false;
   }
   let payload = [cmd];
   if (data) {
     if (typeof data == 'string') data = hex2bytes(data);
     if (data instanceof Uint8Array) data = Array.from(data);
     payload.push(...data)
-  };
+  }
   if (payload.length > MAX_PACKET_SIZE) {
-    throw new Error("BLE packet too large!");
+    addLog("BLE packet too large!");
+    return false;
   }
   addLog(`<span class="action">⇑</span> ${bytes2hex(payload)}`);
-  if (withResponse)
-    await epdCharacteristic.writeValueWithResponse(Uint8Array.from(payload));
-  else
-    await epdCharacteristic.writeValueWithoutResponse(Uint8Array.from(payload));
+  try {
+    if (withResponse)
+      await epdCharacteristic.writeValueWithResponse(Uint8Array.from(payload));
+    else
+      await epdCharacteristic.writeValueWithoutResponse(Uint8Array.from(payload));
+  } catch (e) {
+    console.error(e);
+    if (e.message) addLog(e.message);
+    return false;
+  }
+  return true;
 }
 
 async function epdWrite(cmd, data) {
@@ -95,7 +105,21 @@ async function setDriver() {
   await write(EpdCmd.INIT, document.getElementById("epddriver").value);
 }
 
-async function clearscreen() {
+async function syncTime() {
+  const timestamp = new Date().getTime() / 1000;
+  const data = new Uint8Array([
+    (timestamp >> 24) & 0xFF,
+    (timestamp >> 16) & 0xFF,
+    (timestamp >> 8) & 0xFF,
+    timestamp & 0xFF,
+    -(new Date().getTimezoneOffset() / 60)
+  ]);
+  if(await write(EpdCmd.SET_TIME, data)) {
+    addLog("日历模式：时间已同步！需要一定时间刷新，请耐心等待。");
+  }
+}
+
+async function clearScreen() {
   if(confirm('确认清除屏幕内容?')) {
     await write(EpdCmd.CLEAR);
   }
@@ -163,6 +187,7 @@ function updateButtonStatus() {
   const status = connected ? null : 'disabled';
   document.getElementById("reconnectbutton").disabled = (gattServer == null || gattServer.connected) ? 'disabled' : null;
   document.getElementById("sendcmdbutton").disabled = status;
+  document.getElementById("synctimebutton").disabled = status;
   document.getElementById("clearscreenbutton").disabled = status;
   document.getElementById("sendimgbutton").disabled = status;
   document.getElementById("setDriverbutton").disabled = status;
@@ -178,18 +203,18 @@ function disconnect() {
 async function preConnect() {
   if (gattServer != null && gattServer.connected) {
     if (bleDevice != null && bleDevice.gatt.connected) {
-      await write(EpdCmd.SLEEP);
       bleDevice.gatt.disconnect();
     }
   }
   else {
-    connectTrys = 0;
+    reconnectTrys = 0;
     try {
       bleDevice = await navigator.bluetooth.requestDevice({
         optionalServices: ['62750001-d828-918d-fb46-b6c11c675aec'],
         acceptAllDevices: true
       });
     } catch (e) {
+      console.error(e);
       if (e.message) addLog(e.message);
       return;
     }
@@ -204,7 +229,7 @@ async function preConnect() {
 }
 
 async function reConnect() {
-  connectTrys = 0;
+  reconnectTrys = 0;
   if (bleDevice != null && bleDevice.gatt.connected)
     bleDevice.gatt.disconnect();
   resetVariables();

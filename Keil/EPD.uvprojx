@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51</Define>
               <Undefine></Undefine>
-              <IncludePath>..\config;..\EPD;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
+              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -358,7 +358,7 @@
               <MiscControls></MiscControls>
               <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51</Define>
               <Undefine></Undefine>
-              <IncludePath>..\config;..\EPD;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
+              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -399,76 +399,20 @@
               <FileType>5</FileType>
               <FilePath>..\config\nrf_drv_config.h</FilePath>
             </File>
-            <File>
-              <FileName>pstorage_platform.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\config\pstorage_platform.h</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>EPD</GroupName>
           <Files>
             <File>
-              <FileName>EPD_Test.c</FileName>
+              <FileName>EPD_ble.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_Test.c</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>0</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <uC99>2</uC99>
-                    <uGnu>2</uGnu>
-                    <useXO>2</useXO>
-                    <v6Lang>0</v6Lang>
-                    <v6LangP>0</v6LangP>
-                    <vShortEn>2</vShortEn>
-                    <vShortWch>2</vShortWch>
-                    <v6Lto>2</v6Lto>
-                    <v6WtE>2</v6WtE>
-                    <v6Rtti>2</v6Rtti>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
+              <FilePath>..\EPD\EPD_ble.c</FilePath>
             </File>
             <File>
-              <FileName>DEV_Config.c</FileName>
+              <FileName>EPD_driver.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\DEV_Config.c</FilePath>
+              <FilePath>..\EPD\EPD_driver.c</FilePath>
             </File>
             <File>
               <FileName>EPD_4in2.c</FileName>
@@ -485,10 +429,35 @@
               <FileType>1</FileType>
               <FilePath>..\EPD\EPD_4in2b_V2.c</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>GUI</GroupName>
+          <Files>
             <File>
-              <FileName>EPD_ble.c</FileName>
+              <FileName>Calendar.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_ble.c</FilePath>
+              <FilePath>..\GUI\Calendar.c</FilePath>
+            </File>
+            <File>
+              <FileName>Lunar.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\Lunar.c</FilePath>
+            </File>
+            <File>
+              <FileName>fonts.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\fonts.c</FilePath>
+            </File>
+            <File>
+              <FileName>u8g2_font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\u8g2_font.c</FilePath>
+            </File>
+            <File>
+              <FileName>Adafruit_GFX.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\Adafruit_GFX.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -890,7 +859,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x18000</StartAddress>
-                <Size>0x8000</Size>
+                <Size>0x18000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -953,7 +922,7 @@
               <MiscControls></MiscControls>
               <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51 DEBUG NRF_LOG_USES_RTT=1</Define>
               <Undefine></Undefine>
-              <IncludePath>..\config;..\EPD;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\drivers_ext\segger_rtt;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
+              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\drivers_ext\segger_rtt;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -971,7 +940,7 @@
               <MiscControls></MiscControls>
               <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51</Define>
               <Undefine></Undefine>
-              <IncludePath>..\config;..\EPD;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\drivers_ext\segger_rtt;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
+              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\drivers_ext\segger_rtt;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -1012,25 +981,20 @@
               <FileType>5</FileType>
               <FilePath>..\config\nrf_drv_config.h</FilePath>
             </File>
-            <File>
-              <FileName>pstorage_platform.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\config\pstorage_platform.h</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>EPD</GroupName>
           <Files>
             <File>
-              <FileName>EPD_Test.c</FileName>
+              <FileName>EPD_ble.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_Test.c</FilePath>
+              <FilePath>..\EPD\EPD_ble.c</FilePath>
             </File>
             <File>
-              <FileName>DEV_Config.c</FileName>
+              <FileName>EPD_driver.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\DEV_Config.c</FilePath>
+              <FilePath>..\EPD\EPD_driver.c</FilePath>
             </File>
             <File>
               <FileName>EPD_4in2.c</FileName>
@@ -1047,10 +1011,35 @@
               <FileType>1</FileType>
               <FilePath>..\EPD\EPD_4in2b_V2.c</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>GUI</GroupName>
+          <Files>
             <File>
-              <FileName>EPD_ble.c</FileName>
+              <FileName>Calendar.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_ble.c</FilePath>
+              <FilePath>..\GUI\Calendar.c</FilePath>
+            </File>
+            <File>
+              <FileName>Lunar.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\Lunar.c</FilePath>
+            </File>
+            <File>
+              <FileName>fonts.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\fonts.c</FilePath>
+            </File>
+            <File>
+              <FileName>u8g2_font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\u8g2_font.c</FilePath>
+            </File>
+            <File>
+              <FileName>Adafruit_GFX.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\Adafruit_GFX.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1574,25 +1563,20 @@
               <FileType>5</FileType>
               <FilePath>..\config\nrf_drv_config.h</FilePath>
             </File>
-            <File>
-              <FileName>pstorage_platform.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\config\pstorage_platform.h</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>EPD</GroupName>
           <Files>
             <File>
-              <FileName>EPD_Test.c</FileName>
+              <FileName>EPD_ble.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_Test.c</FilePath>
+              <FilePath>..\EPD\EPD_ble.c</FilePath>
             </File>
             <File>
-              <FileName>DEV_Config.c</FileName>
+              <FileName>EPD_driver.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\DEV_Config.c</FilePath>
+              <FilePath>..\EPD\EPD_driver.c</FilePath>
             </File>
             <File>
               <FileName>EPD_4in2.c</FileName>
@@ -1609,10 +1593,35 @@
               <FileType>1</FileType>
               <FilePath>..\EPD\EPD_4in2b_V2.c</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>GUI</GroupName>
+          <Files>
             <File>
-              <FileName>EPD_ble.c</FileName>
+              <FileName>Calendar.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_ble.c</FilePath>
+              <FilePath>..\GUI\Calendar.c</FilePath>
+            </File>
+            <File>
+              <FileName>Lunar.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\Lunar.c</FilePath>
+            </File>
+            <File>
+              <FileName>fonts.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\fonts.c</FilePath>
+            </File>
+            <File>
+              <FileName>u8g2_font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\u8g2_font.c</FilePath>
+            </File>
+            <File>
+              <FileName>Adafruit_GFX.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\Adafruit_GFX.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -1,5 +1,5 @@
 #include "EPD_Test.h"
-#include "EPD_4in2.h"
+#include "EPD_driver.h"
 
 const unsigned char EPD_4IN2_4Gray_lut_vcom[] =
 {
@@ -52,113 +52,115 @@ const unsigned char EPD_4IN2_4Gray_lut_bb[] ={
     0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00,
 };
 
-static void EPD_4IN2_4Gray_lut(void)
+static void write_4gray_lut(epd_driver_t *driver)
 {
 	unsigned int count;
 
-    EPD_4IN2_SendCommand(0x20);							//vcom
+    driver->send_command(0x20);							//vcom
     for(count=0;count<42;count++)
-        {EPD_4IN2_SendData(EPD_4IN2_4Gray_lut_vcom[count]);}
+        {driver->send_byte(EPD_4IN2_4Gray_lut_vcom[count]);}
     
-    EPD_4IN2_SendCommand(0x21);							//red not use
+    driver->send_command(0x21);							//red not use
     for(count=0;count<42;count++)
-        {EPD_4IN2_SendData(EPD_4IN2_4Gray_lut_ww[count]);}
+        {driver->send_byte(EPD_4IN2_4Gray_lut_ww[count]);}
 
-    EPD_4IN2_SendCommand(0x22);							//bw r
+    driver->send_command(0x22);							//bw r
     for(count=0;count<42;count++)
-        {EPD_4IN2_SendData(EPD_4IN2_4Gray_lut_bw[count]);}
+        {driver->send_byte(EPD_4IN2_4Gray_lut_bw[count]);}
 
-    EPD_4IN2_SendCommand(0x23);							//wb w
+    driver->send_command(0x23);							//wb w
     for(count=0;count<42;count++)
-        {EPD_4IN2_SendData(EPD_4IN2_4Gray_lut_wb[count]);}
+        {driver->send_byte(EPD_4IN2_4Gray_lut_wb[count]);}
 
-    EPD_4IN2_SendCommand(0x24);							//bb b
+    driver->send_command(0x24);							//bb b
     for(count=0;count<42;count++)
-        {EPD_4IN2_SendData(EPD_4IN2_4Gray_lut_bb[count]);}
+        {driver->send_byte(EPD_4IN2_4Gray_lut_bb[count]);}
 
-    EPD_4IN2_SendCommand(0x25);							//vcom
+    driver->send_command(0x25);							//vcom
     for(count=0;count<42;count++)
-        {EPD_4IN2_SendData(EPD_4IN2_4Gray_lut_ww[count]);}
+        {driver->send_byte(EPD_4IN2_4Gray_lut_ww[count]);}
 }
 
-static void drawNormal(void)
+static void drawNormal(epd_driver_t *driver)
 {
     UWORD Width, Height;
-    Width = (EPD_4IN2_WIDTH % 8 == 0)? (EPD_4IN2_WIDTH / 8 ): (EPD_4IN2_WIDTH / 8 + 1);
-    Height = EPD_4IN2_HEIGHT;
+    Width = (driver->width % 8 == 0)? (driver->width / 8 ): (driver->width / 8 + 1);
+    Height = driver->height;
 
-    EPD_4IN2_SendCommand(0x10);
+    driver->send_command(0x10);
     for (UWORD j = 0; j < Height; j++) {
         for (UWORD i = 0; i < Width; i++) {
-            EPD_4IN2_SendData(0xFF);
+            driver->send_byte(0xFF);
         }
     }
 
-    EPD_4IN2_SendCommand(0x13);
+    driver->send_command(0x13);
     for (UWORD j = 0; j < Height; j++) {
         for (UWORD i = 0; i < Width; i++) {
-            EPD_4IN2_SendData(((j + 1)*2 > Height) ? 0x00 : 0xFF);
+            driver->send_byte(((j + 1)*2 > Height) ? 0x00 : 0xFF);
         }
     }
 
-    EPD_4IN2_TurnOnDisplay();
+    driver->display();
 }
 
-static void draw4Gray(void)
+static void draw4Gray(epd_driver_t *driver)
 {
     UWORD Width, Height;
-    Width = (EPD_4IN2_WIDTH % 8 == 0)? (EPD_4IN2_WIDTH / 8 ): (EPD_4IN2_WIDTH / 8 + 1);
-    Height = EPD_4IN2_HEIGHT;
+    Width = (driver->width % 8 == 0)? (driver->width / 8 ): (driver->width / 8 + 1);
+    Height = driver->height;
 
-    EPD_4IN2_SendCommand(0x10);
+    driver->send_command(0x10);
     for (UWORD i = 0; i < Width * Height; i++) {
         UWORD idx = (i % 50) / 12;
         if (idx > 3) idx = 3;
         if (idx == 0 || idx == 1) {
-            EPD_4IN2_SendData(0x00);
+            driver->send_byte(0x00);
         } else if (idx == 2 || idx == 3) {
-            EPD_4IN2_SendData(0xFF);
+            driver->send_byte(0xFF);
         }
     }
 
-    EPD_4IN2_SendCommand(0x13);
+    driver->send_command(0x13);
     for (UWORD i = 0; i < Width * Height; i++) {
         UWORD idx = (i % 50) / 12;
         if (idx > 3) idx = 3;
         if (idx == 0 || idx == 2) {
-            EPD_4IN2_SendData(0x00);
+            driver->send_byte(0x00);
         } else if (idx == 1 || idx == 3) {
-            EPD_4IN2_SendData(0xFF);
+            driver->send_byte(0xFF);
         }
     }
 
 	// Load LUT from register
-    EPD_4IN2_SendCommand(0x00);
-    EPD_4IN2_SendData(0x3f);
+    driver->send_command(0x00);
+    driver->send_byte(0x3f);
 	
-    EPD_4IN2_4Gray_lut();
-    EPD_4IN2_TurnOnDisplay();
+    write_4gray_lut(driver);
+	driver->display();
 	
 	// Load LUT from OTP
-    EPD_4IN2_SendCommand(0x00);
-    EPD_4IN2_SendData(0x1f);
+    driver->send_command(0x00);
+    driver->send_byte(0x1f);
 }
 
 void EPD_4in2_test(void)
 {
-    DEV_Module_Init();
+	epd_driver_t *driver = epd_driver_by_id(EPD_DRIVER_4IN2);
 
-    EPD_4IN2_Init();
-    EPD_4IN2_Clear();
+	DEV_Module_Init();
+
+	driver->init();
+	driver->clear();
     DEV_Delay_ms(500);
 
-    drawNormal();
+    drawNormal(driver);
     DEV_Delay_ms(1000);
 
-    draw4Gray();
+    draw4Gray(driver);
     DEV_Delay_ms(1000);
-    
-    EPD_4IN2_Sleep();
+
+	driver->sleep();
     DEV_Delay_ms(500);
     DEV_Module_Exit();
 }

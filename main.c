@@ -26,16 +26,16 @@
 #include "pstorage.h"
 #include "app_error.h"
 #include "app_timer.h"
+#include "app_util_platform.h"
+#include "nrf_drv_gpiote.h"
 #include "EPD_ble.h"
-#ifdef DEBUG
-#include "EPD_Test.h"
-#endif
+#include "Calendar.h"
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT  1                                              /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
 
 #define DEVICE_NAME                      "NRF_EPD"                                      /**< Name of device. Will be included in the advertising data. */
-#define APP_ADV_INTERVAL                 300                                            /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
-#define APP_ADV_TIMEOUT_IN_SECONDS       180                                            /**< The advertising timeout (in units of seconds). */
+#define APP_ADV_INTERVAL                 320                                            /**< The advertising interval (in units of 0.625 ms. This value corresponds to 200 ms). */
+#define APP_ADV_TIMEOUT_IN_SECONDS       120                                            /**< The advertising timeout (in units of seconds). */
 #define APP_TIMER_PRESCALER              0                                              /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE          4                                              /**< Size of timer operation queues. */
 
@@ -48,11 +48,37 @@
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)    /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT     3                                              /**< Number of attempts before giving up the connection parameter negotiation. */
 
+#define CLOCK_TIMER_INTERVAL             APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)     /**< Clock timer interval (ticks). */
+
 #define DEAD_BEEF                        0xDEADBEEF                                     /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
+static uint16_t                          m_driver_refs = 0;
 static uint16_t                          m_conn_handle = BLE_CONN_HANDLE_INVALID;       /**< Handle of the current connection. */
 static ble_uuid_t                        m_adv_uuids[] = {{BLE_UUID_EPD_SERVICE, EPD_SERVICE_UUID_TYPE}};  /**< Universally unique service identifier. */
 static ble_epd_t                         m_epd;                                         /**< Structure to identify the EPD Service. */
+static uint32_t                          m_timestamp = 1735689600;                      /**< Current timestamp. */
+static bool                              m_update_calendar = false;                     /**< Update calendar if true */
+static bool                              m_calendar_mode = false;                       /**< Whether we are in calendar mode */
+
+APP_TIMER_DEF(m_clock_timer_id);                                                        /**< Clock timer. */
+
+static void epd_driver_init()
+{
+    if (m_driver_refs == 0) {
+        NRF_LOG_PRINTF("[EPD]: driver init\n");
+        DEV_Module_Init();
+    }
+    m_driver_refs++;
+}
+
+static void epd_driver_exit()
+{
+    m_driver_refs--;
+    if (m_driver_refs == 0) {
+        NRF_LOG_PRINTF("[EPD]: driver exit\n");
+        DEV_Module_Exit();
+    }
+}
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -70,6 +96,19 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
+static void clock_timer_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+
+    m_timestamp++;
+
+    // Update calendar on 00:00:00
+    if (m_calendar_mode && m_timestamp % 86400 == 0)
+    {
+        m_update_calendar = true;
+    }
+}
+
 /**@brief Function for the Timer initialization.
  *
  * @details Initializes the timer module. This creates and starts application timers.
@@ -78,6 +117,54 @@ static void timers_init(void)
 {
     // Initialize timer module.
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
+    
+    // Create timers.
+    uint32_t err_code = app_timer_create(&m_clock_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                clock_timer_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+/**@brief Function for starting application timers.
+ */
+static void application_timers_start(void)
+{
+    // Start application timers.
+    uint32_t err_code = app_timer_start(m_clock_timer_id, CLOCK_TIMER_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
+}
+
+bool epd_cmd_callback(uint8_t cmd, uint8_t *data, uint16_t len)
+{
+    switch (cmd)
+    {
+        case EPD_CMD_SET_TIME:
+            if (len < 4) {
+                NRF_LOG_PRINTF("invalid time data!\n");
+                return false;
+            }
+
+            NRF_LOG_PRINTF("time: %02x %02x %02x %02x\n", data[0], data[1], data[2], data[3]);
+            if (len > 4) {
+                NRF_LOG_PRINTF("timezone: %d\n", (int8_t)data[4]);
+            }
+
+            app_timer_stop(m_clock_timer_id);
+            m_timestamp = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
+            m_timestamp += (len > 4 ? (int8_t)data[4] : 8) * 60 * 60; // timezone
+            app_timer_start(m_clock_timer_id, CLOCK_TIMER_INTERVAL, NULL);
+
+            m_calendar_mode = true;
+            m_update_calendar = true;
+            return true;
+        case EPD_CMD_CLEAR:
+        case EPD_CMD_DISPLAY:
+            m_calendar_mode = false;
+            break;
+        default:
+            break;
+    }
+    return false;
 }
 
 /**@brief Function for initializing services that will be used by the application.
@@ -90,7 +177,7 @@ static void services_init(void)
     APP_ERROR_CHECK(err_code);
 
     memset(&m_epd, 0, sizeof(ble_epd_t));
-    err_code = ble_epd_init(&m_epd);
+    err_code = ble_epd_init(&m_epd, epd_cmd_callback);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -187,6 +274,12 @@ static void conn_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+static void advertising_start(void)
+{
+    NRF_LOG_PRINTF("advertising start\n");
+    uint32_t err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
+    APP_ERROR_CHECK(err_code);
+}
 
 /**@brief Function for putting the chip into sleep mode.
  *
@@ -194,6 +287,8 @@ static void conn_params_init(void)
  */
 static void sleep_mode_enter(void)
 {
+    NRF_LOG_PRINTF("Entering deep sleep mode\n");
+
     // Prepare wakeup pin
     ble_epd_sleep_prepare(&m_epd);
 
@@ -202,6 +297,28 @@ static void sleep_mode_enter(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
+    NRF_LOG_PRINTF("pin: %d, event: %d\n", pin, action);
+
+    nrf_drv_gpiote_in_event_disable(pin);
+    nrf_drv_gpiote_in_uninit(pin);
+    nrf_drv_gpiote_uninit();
+
+    advertising_start();
+}
+
+static void setup_wakeup_pin(nrf_drv_gpiote_pin_t pin) {
+    NRF_LOG_PRINTF("Setting up wakeup pin\n");
+
+    ret_code_t err_code = nrf_drv_gpiote_init();
+    APP_ERROR_CHECK(err_code);
+    nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_LOTOHI(false);
+
+    err_code = nrf_drv_gpiote_in_init(pin, &config, gpiote_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_event_enable(pin, true);
+}
 
 /**@brief Function for handling advertising events.
  *
@@ -216,7 +333,12 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
         case BLE_ADV_EVT_FAST:
             break;
         case BLE_ADV_EVT_IDLE:
-            sleep_mode_enter();
+            NRF_LOG_PRINTF("advertising timeout\n");
+            if (m_calendar_mode) {
+                setup_wakeup_pin(m_epd.config.wakeup_pin);
+            } else {
+                sleep_mode_enter();
+            }
             break;
         default:
             break;
@@ -235,12 +357,13 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            epd_driver_init();
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-            err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
-            APP_ERROR_CHECK(err_code);
+            epd_driver_exit();
+            advertising_start();
             break;
 
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
@@ -364,6 +487,19 @@ static void power_manage(void)
 {
     uint32_t err_code = sd_app_evt_wait();
     APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_PRINTF("timestamp: %d\n", m_timestamp);
+}
+
+static void calendar_update(void)
+{
+    if (!m_update_calendar) return;
+
+    m_update_calendar = false;
+    epd_driver_init();
+    m_epd.driver->init();
+    DrawCalendar(m_timestamp);
+    epd_driver_exit();
 }
 
 /**@brief Function for application main entry.
@@ -384,17 +520,16 @@ int main(void)
     advertising_init();
     conn_params_init();
 
-    err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
-    APP_ERROR_CHECK(err_code);
+    // Start execution.
+    application_timers_start();
+
+    advertising_start();
 
     NRF_LOG_PRINTF("done.\n");
 
-#ifdef DEBUG
-    EPD_4in2_test();
-#endif
-
     for (;;)
     {
+        calendar_update();
         power_manage();
     }
 }

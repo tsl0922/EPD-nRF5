@@ -11,12 +11,9 @@
 * | Info        :   Basic version
 *
 ******************************************************************************/
-#include "nrf_drv_spi.h"
-#include "DEV_Config.h"
 
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
+#include "nrf_drv_spi.h"
+#include "EPD_driver.h"
 
 uint32_t EPD_MOSI_PIN = 5;
 uint32_t EPD_SCLK_PIN = 8;
@@ -27,6 +24,50 @@ uint32_t EPD_BUSY_PIN = 12;
 uint32_t EPD_BS_PIN = 13;
 
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(0);
+
+extern epd_driver_t epd_driver_4in2;
+extern epd_driver_t epd_driver_4in2v2;
+extern epd_driver_t epd_driver_4in2bv2;
+
+/** EPD drivers */
+static epd_driver_t *epd_drivers[] = {
+    &epd_driver_4in2,
+    &epd_driver_4in2v2,
+    &epd_driver_4in2bv2,
+};
+
+/**< current EPD driver */
+static epd_driver_t *m_driver = NULL;
+
+epd_driver_t *epd_driver_get(void)
+{
+    if (m_driver == NULL)
+        m_driver = epd_drivers[0];
+    return m_driver;
+}
+
+epd_driver_t *epd_driver_by_id(uint8_t id)
+{
+    for (uint8_t i = 0; i < ARRAY_SIZE(epd_drivers); i++)
+    {
+      if (epd_drivers[i]->id == id)
+      {
+          return epd_drivers[i];
+      }
+    }
+    return NULL;
+}
+
+bool epd_driver_set(uint8_t id)
+{
+    epd_driver_t *driver = epd_driver_by_id(id);
+    if (driver )
+    {
+        m_driver = driver;
+        return true;
+    }
+    return false;
+}
 
 /******************************************************************************
 function: Initialize Arduino, Initialize Pins, and SPI
@@ -57,8 +98,19 @@ UBYTE DEV_Module_Init(void)
     DEV_Digital_Write(EPD_DC_PIN, 0);
     DEV_Digital_Write(EPD_CS_PIN, 0);
     DEV_Digital_Write(EPD_RST_PIN, 1);
-  
+
     return 0;
+}
+
+void DEV_Module_Exit(void)
+{
+    DEV_Digital_Write(EPD_DC_PIN, 0);
+    DEV_Digital_Write(EPD_CS_PIN, 0);
+
+    //close 5V
+    DEV_Digital_Write(EPD_RST_PIN, 0);
+
+    nrf_drv_spi_uninit(&spi);
 }
 
 /*********************************************
@@ -84,13 +136,26 @@ UBYTE DEV_SPI_ReadByte(void)
     return value;
 }
 
-void DEV_Module_Exit(void)
+void EPD_WriteCommand(UBYTE Reg)
 {
     DEV_Digital_Write(EPD_DC_PIN, 0);
     DEV_Digital_Write(EPD_CS_PIN, 0);
+    DEV_SPI_WriteByte(Reg);
+    DEV_Digital_Write(EPD_CS_PIN, 1);
+}
 
-    //close 5V
-    DEV_Digital_Write(EPD_RST_PIN, 0);
-  
-    nrf_drv_spi_uninit(&spi);
+void EPD_WriteByte(UBYTE Data)
+{
+    DEV_Digital_Write(EPD_DC_PIN, 1);
+    DEV_Digital_Write(EPD_CS_PIN, 0);
+    DEV_SPI_WriteByte(Data);
+    DEV_Digital_Write(EPD_CS_PIN, 1);
+}
+
+void EPD_WriteData(UBYTE *Data, UBYTE Len)
+{
+    DEV_Digital_Write(EPD_DC_PIN, 1);
+    DEV_Digital_Write(EPD_CS_PIN, 0);
+    DEV_SPI_WriteBytes(Data, Len);
+    DEV_Digital_Write(EPD_CS_PIN, 1);
 }

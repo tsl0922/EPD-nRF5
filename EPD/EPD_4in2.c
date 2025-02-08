@@ -6,7 +6,6 @@
 *----------------
 * |	This version:   V3.0
 * | Date        :   2019-06-13
-* | Info        :
 * -----------------------------------------------------------------------------
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,7 +27,11 @@
 # THE SOFTWARE.
 #
 ******************************************************************************/
-#include "EPD_4in2.h"
+#include "EPD_driver.h"
+
+// Display resolution
+#define EPD_4IN2_WIDTH       400
+#define EPD_4IN2_HEIGHT      300
 
 /******************************************************************************
 function :	Software reset
@@ -48,40 +51,6 @@ static void EPD_4IN2_Reset(void)
 }
 
 /******************************************************************************
-function :	send command
-parameter:
-     Reg : Command register
-******************************************************************************/
-void EPD_4IN2_SendCommand(UBYTE Reg)
-{
-    DEV_Digital_Write(EPD_DC_PIN, 0);
-    DEV_Digital_Write(EPD_CS_PIN, 0);
-    DEV_SPI_WriteByte(Reg);
-    DEV_Digital_Write(EPD_CS_PIN, 1);
-}
-
-/******************************************************************************
-function :	send data
-parameter:
-    Data : Write data
-******************************************************************************/
-void EPD_4IN2_SendData(UBYTE Data)
-{
-    DEV_Digital_Write(EPD_DC_PIN, 1);
-    DEV_Digital_Write(EPD_CS_PIN, 0);
-    DEV_SPI_WriteByte(Data);
-    DEV_Digital_Write(EPD_CS_PIN, 1);
-}
-
-void EPD_4IN2_SendData2(UBYTE *Data, UBYTE Len)
-{
-    DEV_Digital_Write(EPD_DC_PIN, 1);
-    DEV_Digital_Write(EPD_CS_PIN, 0);
-    DEV_SPI_WriteBytes(Data, Len);
-    DEV_Digital_Write(EPD_CS_PIN, 1);
-}
-
-/******************************************************************************
 function :	Wait until the busy_pin goes LOW
 parameter:
 ******************************************************************************/
@@ -98,7 +67,7 @@ parameter:
 ******************************************************************************/
 void EPD_4IN2_TurnOnDisplay(void)
 {
-    EPD_4IN2_SendCommand(0x12);
+    EPD_WriteCommand(0x12);
     DEV_Delay_ms(100);
     EPD_4IN2_ReadBusy();
 }
@@ -111,20 +80,20 @@ void EPD_4IN2_Init(void)
 {
 	EPD_4IN2_Reset();
 
-	EPD_4IN2_SendCommand(0x04);         // POWER ON
+	EPD_WriteCommand(0x04);         // POWER ON
 	EPD_4IN2_ReadBusy();
 
-	EPD_4IN2_SendCommand(0x00);			// panel setting
-	EPD_4IN2_SendData(0x1f);		    // 400x300 B/W mode, LUT from OTP
+	EPD_WriteCommand(0x00);			// panel setting
+	EPD_WriteByte(0x1f);		    // 400x300 B/W mode, LUT from OTP
 
-	EPD_4IN2_SendCommand(0x61);			// resolution setting
-	EPD_4IN2_SendData (EPD_4IN2_WIDTH / 256);
-	EPD_4IN2_SendData (EPD_4IN2_WIDTH % 256);
-	EPD_4IN2_SendData (EPD_4IN2_HEIGHT / 256);
-	EPD_4IN2_SendData (EPD_4IN2_HEIGHT % 256);
+	EPD_WriteCommand(0x61);			// resolution setting
+	EPD_WriteByte (EPD_4IN2_WIDTH / 256);
+	EPD_WriteByte (EPD_4IN2_WIDTH % 256);
+	EPD_WriteByte (EPD_4IN2_HEIGHT / 256);
+	EPD_WriteByte (EPD_4IN2_HEIGHT % 256);
 
-	EPD_4IN2_SendCommand(0x50);         // VCOM AND DATA INTERVAL SETTING
-	EPD_4IN2_SendData(0x97);            // LUTB=0 LUTW=1 interval=10
+	EPD_WriteCommand(0x50);         // VCOM AND DATA INTERVAL SETTING
+	EPD_WriteByte(0x97);            // LUTB=0 LUTW=1 interval=10
 }
 
 /******************************************************************************
@@ -137,48 +106,55 @@ void EPD_4IN2_Clear(void)
     Width = (EPD_4IN2_WIDTH % 8 == 0)? (EPD_4IN2_WIDTH / 8 ): (EPD_4IN2_WIDTH / 8 + 1);
     Height = EPD_4IN2_HEIGHT;
 
-    EPD_4IN2_SendCommand(0x10);
+    EPD_WriteCommand(0x10);
     for (UWORD j = 0; j < Height; j++) {
         for (UWORD i = 0; i < Width; i++) {
-            EPD_4IN2_SendData(0xFF);
+            EPD_WriteByte(0xFF);
         }
     }
 
-    EPD_4IN2_SendCommand(0x13);
+    EPD_WriteCommand(0x13);
     for (UWORD j = 0; j < Height; j++) {
         for (UWORD i = 0; i < Width; i++) {
-            EPD_4IN2_SendData(0xFF);
+            EPD_WriteByte(0xFF);
         }
     }
 
     EPD_4IN2_TurnOnDisplay();
 }
 
-/******************************************************************************
-function :	Sends the image buffer in RAM to e-Paper and displays
-parameter:
-******************************************************************************/
-void EPD_4IN2_Display(UBYTE *Image)
+static void _setPartialRamArea(UWORD x, UWORD y, UWORD w, UWORD h)
 {
-    UWORD Width, Height;
-    Width = (EPD_4IN2_WIDTH % 8 == 0)? (EPD_4IN2_WIDTH / 8 ): (EPD_4IN2_WIDTH / 8 + 1);
-    Height = EPD_4IN2_HEIGHT;
+  uint16_t xe = (x + w - 1) | 0x0007; // byte boundary inclusive (last byte)
+  uint16_t ye = y + h - 1;
+  x &= 0xFFF8; // byte boundary
+  EPD_WriteCommand(0x90); // partial window
+  EPD_WriteByte(x / 256);
+  EPD_WriteByte(x % 256);
+  EPD_WriteByte(xe / 256);
+  EPD_WriteByte(xe % 256);
+  EPD_WriteByte(y / 256);
+  EPD_WriteByte(y % 256);
+  EPD_WriteByte(ye / 256);
+  EPD_WriteByte(ye % 256);
+  EPD_WriteByte(0x01);
+}
 
-	EPD_4IN2_SendCommand(0x10);
-    for (UWORD j = 0; j < Height; j++) {
-        for (UWORD i = 0; i < Width; i++) {
-            EPD_4IN2_SendData(0x00);
+void EPD_4IN2_Write_Image(UBYTE *black, UBYTE *color, UWORD x, UWORD y, UWORD w, UWORD h)
+{
+    UWORD wb = (w + 7) / 8; // width bytes, bitmaps are padded
+    x -= x % 8; // byte boundary
+    w = wb * 8; // byte boundary
+    if (x + w > EPD_4IN2_WIDTH || y + h > EPD_4IN2_HEIGHT) return;
+    EPD_WriteCommand(0x91); // partial in
+    _setPartialRamArea(x, y, w, h);
+    EPD_WriteCommand(0x13);
+    for (UWORD i = 0; i < h; i++) {
+        for (UWORD j = 0; j < w / 8; j++) {
+            EPD_WriteByte(black[j + i * wb]);
         }
     }
-
-    EPD_4IN2_SendCommand(0x13);
-    for (UWORD j = 0; j < Height; j++) {
-        for (UWORD i = 0; i < Width; i++) {
-            EPD_4IN2_SendData(Image[i + j * Width]);
-        }
-    }
-
-    EPD_4IN2_TurnOnDisplay();
+    EPD_WriteCommand(0x92); // partial out
 }
 
 /******************************************************************************
@@ -187,12 +163,26 @@ parameter:
 ******************************************************************************/
 void EPD_4IN2_Sleep(void)
 {
-	EPD_4IN2_SendCommand(0x50); // DEEP_SLEEP
-	EPD_4IN2_SendData(0XF7);
+	EPD_WriteCommand(0x50); // DEEP_SLEEP
+	EPD_WriteByte(0XF7);
 
-	EPD_4IN2_SendCommand(0x02); // POWER_OFF
+	EPD_WriteCommand(0x02); // POWER_OFF
 	EPD_4IN2_ReadBusy();
 
-	EPD_4IN2_SendCommand(0x07); // DEEP_SLEEP
-	EPD_4IN2_SendData(0XA5);
+	EPD_WriteCommand(0x07); // DEEP_SLEEP
+	EPD_WriteByte(0XA5);
 }
+
+const epd_driver_t epd_driver_4in2 = {
+    .id = EPD_DRIVER_4IN2,
+	.width = EPD_4IN2_WIDTH,
+	.height = EPD_4IN2_HEIGHT,
+    .init = EPD_4IN2_Init,
+    .clear = EPD_4IN2_Clear,
+    .send_command = EPD_WriteCommand,
+	.send_byte = EPD_WriteByte,
+    .send_data = EPD_WriteData,
+    .write_image = EPD_4IN2_Write_Image,
+    .display = EPD_4IN2_TurnOnDisplay,
+    .sleep = EPD_4IN2_Sleep,
+};

@@ -17,11 +17,13 @@
 #include "ble_srv_common.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "DEV_Config.h"
+#include "EPD_driver.h"
 
 #define BLE_UUID_EPD_SERVICE  0x0001
 #define EPD_SERVICE_UUID_TYPE BLE_UUID_TYPE_VENDOR_BEGIN
 #define BLE_EPD_MAX_DATA_LEN  (GATT_MTU_SIZE_DEFAULT - 3) /**< Maximum length of data (in bytes) that can be transmitted to the peer. */
+
+typedef bool (*epd_callback_t)(uint8_t cmd, uint8_t *data, uint16_t len);
 
 /**< EPD Service Configs */
 typedef struct
@@ -50,35 +52,14 @@ enum EPD_CMDS
     EPD_CMD_SEND_DATA,                                /**< send data to EPD */
     EPD_CMD_DISPLAY,                                  /**< diaplay EPD ram on screen */
     EPD_CMD_SLEEP,                                    /**< EPD enter sleep mode */
+	
+	EPD_CMD_SET_TIME = 0x20,                          /** < set time with unix timestamp */
 
     EPD_CMD_SET_CONFIG = 0x90,                        /**< set full EPD config */
     EPD_CMD_SYS_RESET  = 0x91,                        /**< MCU reset */
     EPD_CMD_SYS_SLEEP  = 0x92,                        /**< MCU enter sleep mode */
     EPD_CMD_CFG_ERASE  = 0x99,                        /**< Erase config and reset */
 };
-
-/**< EPD driver IDs. */
-enum EPD_DRIVER_IDS
-{
-    EPD_DRIVER_4IN2 = 1,
-    EPD_DRIVER_4IN2_V2,
-    EPD_DRIVER_4IN2B_V2,
-};
-
-/**@brief EPD driver structure.
- *
- * @details This structure contains epd driver functions.
- */
-typedef struct
-{
-    uint8_t id;                                       /**< driver ID. */
-    void (*init)(void);                               /**< Initialize the e-Paper register */
-    void (*clear)(void);                              /**< Clear screen */
-    void (*send_command)(UBYTE Reg);                  /**< send command */
-    void (*send_data)(UBYTE *Data, UBYTE Len);        /**< send data */
-    void (*display)(void);                            /**< Sends the image buffer in RAM to e-Paper and displays */
-    void (*sleep)(void);                              /**< Enter sleep mode */
-} epd_driver_t;
 
 /**@brief EPD Service structure.
  *
@@ -93,6 +74,7 @@ typedef struct
     bool                     is_notification_enabled; /**< Variable to indicate if the peer has enabled notification of the RX characteristic.*/
     epd_driver_t             *driver;                 /**< current EPD driver */
     epd_config_t             config;                  /**< EPD config */
+	epd_callback_t           epd_cmd_cb;              /**< EPD callback */
 } ble_epd_t;
 
 /**@brief Function for preparing sleep mode.
@@ -106,12 +88,12 @@ void ble_epd_sleep_prepare(ble_epd_t * p_epd);
  * @param[out] p_epd      EPD Service structure. This structure must be supplied
  *                        by the application. It is initialized by this function and will
  *                        later be used to identify this particular service instance.
- * @param[in] p_epd_init  Information needed to initialize the service.
+ * @param[in] cmd_cb      Time update callback
  *
  * @retval NRF_SUCCESS If the service was successfully initialized. Otherwise, an error code is returned.
  * @retval NRF_ERROR_NULL If either of the pointers p_epd or p_epd_init is NULL.
  */
-uint32_t ble_epd_init(ble_epd_t * p_epd);
+uint32_t ble_epd_init(ble_epd_t * p_epd, epd_callback_t cmd_cb);
 
 /**@brief Function for handling the EPD Service's BLE events.
  *
