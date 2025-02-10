@@ -78,12 +78,11 @@ parameter:
 void EPD_4IN2B_V2_Init(void)
 {
     EPD_4IN2B_V2_Reset();
-    
-    EPD_WriteCommand(0x04); 
-    EPD_4IN2B_V2_ReadBusy();
 
     EPD_WriteCommand(0x00);
     EPD_WriteByte(0x0f);
+
+    EPD_WriteCommand(0x04); 
 }
 
 /******************************************************************************

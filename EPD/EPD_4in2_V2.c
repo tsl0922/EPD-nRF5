@@ -109,9 +109,9 @@ void EPD_4IN2_V2_Init(void)
 {
     EPD_4IN2_V2_Reset();
 
-    EPD_4IN2_V2_ReadBusy();   
+    DEV_Delay_ms(10);
     EPD_WriteCommand(0x12);   // soft  reset
-    EPD_4IN2_V2_ReadBusy();
+    DEV_Delay_ms(10);
 	
     // EPD_WriteCommand(0x01); //Driver output control      
     // EPD_WriteByte((EPD_4IN2_V2_HEIGHT-1)%256);   
@@ -131,8 +131,6 @@ void EPD_4IN2_V2_Init(void)
 	EPD_4IN2_V2_SetWindows(0, 0, EPD_4IN2_V2_WIDTH-1, EPD_4IN2_V2_HEIGHT-1);
 	 
 	EPD_4IN2_V2_SetCursor(0, 0);
-	
-    EPD_4IN2_V2_ReadBusy();
 }
 
 /******************************************************************************

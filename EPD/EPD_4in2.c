@@ -80,9 +80,6 @@ void EPD_4IN2_Init(void)
 {
 	EPD_4IN2_Reset();
 
-	EPD_WriteCommand(0x04);         // POWER ON
-	EPD_4IN2_ReadBusy();
-
 	EPD_WriteCommand(0x00);			// panel setting
 	EPD_WriteByte(0x1f);		    // 400x300 B/W mode, LUT from OTP
 
@@ -94,6 +91,8 @@ void EPD_4IN2_Init(void)
 
 	EPD_WriteCommand(0x50);         // VCOM AND DATA INTERVAL SETTING
 	EPD_WriteByte(0x97);            // LUTB=0 LUTW=1 interval=10
+
+    EPD_WriteCommand(0x04);         // POWER ON
 }
 
 /******************************************************************************
