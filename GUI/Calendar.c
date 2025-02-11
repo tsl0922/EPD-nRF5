@@ -3,8 +3,9 @@
 #include "EPD_driver.h"
 #include "Lunar.h"
 #include "Calendar.h"
+#include "nrf_log.h"
 
-#define PAGE_HEIGHT 32
+#define PAGE_HEIGHT 72
 
 static void DrawDateHeader(Adafruit_GFX *gfx, int16_t x, int16_t y, tm_t *tm, struct Lunar_Date *Lunar)
 {
@@ -89,18 +90,19 @@ void DrawCalendar(uint32_t timestamp)
 
     GFX_firstPage(&gfx);
     do {
+        NRF_LOG_PRINTF("page %d\n", gfx.current_page);
         GFX_fillScreen(&gfx, GFX_WHITE);
 
         DrawDateHeader(&gfx, 10, 22, &tm, &Lunar);
         DrawWeekHeader(&gfx, 10, 26);
 
         for (uint8_t i = 0; i < monthMaxDays; i++)
-        {
             DrawMonthDay(&gfx, 22 + (firstDayWeek + i) % 7 * 55, 60 + (firstDayWeek + i) / 7 * 50, &tm, &Lunar, i + 1);
-        }
     } while(GFX_nextPage(&gfx, driver->write_image));
 
     GFX_end(&gfx);
 
+    NRF_LOG_PRINTF("display start\n");
     driver->display();
+    NRF_LOG_PRINTF("display end\n");
 }

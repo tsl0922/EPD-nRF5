@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51</Define>
               <Undefine></Undefine>
-              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
+              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\libraries\scheduler;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -358,7 +358,7 @@
               <MiscControls></MiscControls>
               <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51</Define>
               <Undefine></Undefine>
-              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
+              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\libraries\scheduler;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -533,6 +533,11 @@
               <FileName>app_error.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\libraries\util\app_error.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_scheduler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\libraries\scheduler\app_scheduler.c</FilePath>
             </File>
             <File>
               <FileName>app_timer.c</FileName>
@@ -859,7 +864,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x18000</StartAddress>
-                <Size>0x8000</Size>
+                <Size>0x18000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -922,7 +927,7 @@
               <MiscControls></MiscControls>
               <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51 DEBUG NRF_LOG_USES_RTT=1</Define>
               <Undefine></Undefine>
-              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\drivers_ext\segger_rtt;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
+              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\drivers_ext\segger_rtt;..\components\libraries\scheduler;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -938,9 +943,9 @@
             <ClangAsOpt>1</ClangAsOpt>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51</Define>
+              <Define>BLE_STACK_SUPPORT_REQD S110 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51 __HEAP_SIZE=2048</Define>
               <Undefine></Undefine>
-              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\drivers_ext\segger_rtt;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
+              <IncludePath>..\config;..\EPD;..\GUI;..\components\toolchain;..\components\toolchain\cmsis\include;..\components\drivers_nrf\config;..\components\drivers_nrf\common;..\components\drivers_nrf\delay;..\components\drivers_nrf\gpiote;..\components\drivers_nrf\hal;..\components\drivers_nrf\spi_master;..\components\drivers_nrf\pstorage;..\components\drivers_nrf\pstorage\config;..\components\drivers_nrf\twi_master;..\components\drivers_ext\segger_rtt;..\components\libraries\scheduler;..\components\libraries\trace;..\components\libraries\timer;..\components\libraries\util;..\components\ble\common;..\components\ble\ble_advertising;..\components\softdevice\common\softdevice_handler;..\components\softdevice\s110\headers</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -1115,6 +1120,11 @@
               <FileName>app_error.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\libraries\util\app_error.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_scheduler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\libraries\scheduler\app_scheduler.c</FilePath>
             </File>
             <File>
               <FileName>app_timer.c</FileName>
@@ -1697,6 +1707,11 @@
               <FileName>app_error.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\libraries\util\app_error.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_scheduler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\libraries\scheduler\app_scheduler.c</FilePath>
             </File>
             <File>
               <FileName>app_timer.c</FileName>

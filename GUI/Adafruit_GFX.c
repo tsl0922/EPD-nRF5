@@ -32,31 +32,29 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "Adafruit_GFX.h"
 
-#ifndef abs
-#define abs(x) ((x)>0?(x):-(x))
+#ifndef ABS
+#define ABS(x) ((x) > 0 ? (x) : -(x))
 #endif
-#ifndef min
-#define min(a, b) (((a) < (b)) ? (a) : (b))
+#ifndef MIN
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
-
-#ifndef _swap_int16_t
-#define _swap_int16_t(a, b)                                                    \
-  {                                                                            \
-    int16_t t = a;                                                             \
-    a = b;                                                                     \
-    b = t;                                                                     \
-  }
+#ifndef SWAP
+#define SWAP(a, b, T) do { T t = a; a = b; b = t; } while (0)
+#endif
+#ifndef CONTAINER_OF
+#define CONTAINER_OF(ptr, type, member) (type *)((char *)ptr - offsetof(type, member))
 #endif
 
-static void GFX_u8g2_draw_hv_line(int16_t x, int16_t y, int16_t len,
-                                  uint8_t dir, uint16_t color, void *arg)
+static void GFX_u8g2_draw_hv_line(u8g2_font_t *u8g2, int16_t x, int16_t y,
+                                  int16_t len, uint8_t dir, uint16_t color)
 {
-  Adafruit_GFX *gfx = (Adafruit_GFX *)arg;
+  Adafruit_GFX *gfx = CONTAINER_OF(u8g2, Adafruit_GFX, u8g2);
   switch(dir) {
     case 0:
       GFX_drawFastHLine(gfx, x, y, len, color);
@@ -87,7 +85,6 @@ void GFX_begin(Adafruit_GFX *gfx, int16_t w, int16_t h, int16_t buffer_height) {
   gfx->WIDTH = gfx->_width = w;
   gfx->HEIGHT = gfx->_height = h;
   gfx->u8g2.draw_hv_line = GFX_u8g2_draw_hv_line;
-  gfx->u8g2.draw_hv_line_arg = gfx;
   gfx->buffer = malloc(((gfx->WIDTH + 7) / 8) * buffer_height);
   gfx->page_height = buffer_height;
   gfx->total_pages = (gfx->HEIGHT / gfx->page_height) + (gfx->HEIGHT % gfx->page_height > 0);
@@ -119,7 +116,7 @@ void GFX_firstPage(Adafruit_GFX *gfx) {
 
 bool GFX_nextPage(Adafruit_GFX *gfx, buffer_callback callback) {
   int16_t page_y = gfx->current_page * gfx->page_height;
-  int16_t height = min(gfx->page_height, gfx->HEIGHT - page_y);
+  int16_t height = MIN(gfx->page_height, gfx->HEIGHT - page_y);
   if (callback)
     callback(gfx->buffer, gfx->color, 0, page_y, gfx->WIDTH, height);
 
@@ -167,7 +164,7 @@ void GFX_drawPixel(Adafruit_GFX *gfx, int16_t x, int16_t y, uint16_t color) {
     case GFX_ROTATE_0:
       break;
     case GFX_ROTATE_90:
-      _swap_int16_t(x, y);
+      SWAP(x, y, int16_t);
       x = gfx->WIDTH - x - 1;
       break;
     case GFX_ROTATE_180:
@@ -175,7 +172,7 @@ void GFX_drawPixel(Adafruit_GFX *gfx, int16_t x, int16_t y, uint16_t color) {
       y = gfx->HEIGHT - y - 1;
       break;
     case GFX_ROTATE_270:
-      _swap_int16_t(x, y);
+      SWAP(x, y, int16_t);
       y = gfx->HEIGHT - y - 1;
       break;
   }
@@ -211,20 +208,20 @@ void GFX_drawPixel(Adafruit_GFX *gfx, int16_t x, int16_t y, uint16_t color) {
 /**************************************************************************/
 void GFX_drawLine(Adafruit_GFX *gfx, int16_t x0, int16_t y0, int16_t x1, int16_t y1,
                    uint16_t color) {
-  int16_t steep = abs(y1 - y0) > abs(x1 - x0);
+  int16_t steep = ABS(y1 - y0) > ABS(x1 - x0);
   if (steep) {
-    _swap_int16_t(x0, y0);
-    _swap_int16_t(x1, y1);
+    SWAP(x0, y0, int16_t);
+    SWAP(x1, y1, int16_t);
   }
 
   if (x0 > x1) {
-    _swap_int16_t(x0, x1);
-    _swap_int16_t(y0, y1);
+    SWAP(x0, x1, int16_t);
+    SWAP(y0, y1, int16_t);
   }
 
   int16_t dx, dy;
   dx = x1 - x0;
-  dy = abs(y1 - y0);
+  dy = ABS(y1 - y0);
 
   int16_t err = dx / 2;
   int16_t ystep;
@@ -571,16 +568,16 @@ void GFX_fillTriangle(Adafruit_GFX *gfx, int16_t x0, int16_t y0, int16_t x1,
 
   // Sort coordinates by Y order (y2 >= y1 >= y0)
   if (y0 > y1) {
-    _swap_int16_t(y0, y1);
-    _swap_int16_t(x0, x1);
+    SWAP(y0, y1, int16_t);
+    SWAP(x0, x1, int16_t);
   }
   if (y1 > y2) {
-    _swap_int16_t(y2, y1);
-    _swap_int16_t(x2, x1);
+    SWAP(y2, y1, int16_t);
+    SWAP(x2, x1, int16_t);
   }
   if (y0 > y1) {
-    _swap_int16_t(y0, y1);
-    _swap_int16_t(x0, x1);
+    SWAP(y0, y1, int16_t);
+    SWAP(x0, x1, int16_t);
   }
 
   if (y0 == y2) { // Handle awkward all-on-same-line case as its own thing
@@ -622,7 +619,7 @@ void GFX_fillTriangle(Adafruit_GFX *gfx, int16_t x0, int16_t y0, int16_t x1,
     b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
     */
     if (a > b)
-      _swap_int16_t(a, b);
+      SWAP(a, b, int16_t);
     GFX_drawFastHLine(gfx, a, y, b - a + 1, color);
   }
 
@@ -640,7 +637,7 @@ void GFX_fillTriangle(Adafruit_GFX *gfx, int16_t x0, int16_t y0, int16_t x1,
     b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
     */
     if (a > b)
-      _swap_int16_t(a, b);
+      SWAP(a, b, int16_t);
     GFX_drawFastHLine(gfx, a, y, b - a + 1, color);
   }
 }

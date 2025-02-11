@@ -143,12 +143,10 @@ static void epd_service_process(ble_epd_t * p_epd, uint8_t * p_data, uint16_t le
 
       case EPD_CMD_DISPLAY:
           p_epd->driver->display();
-          DEV_Delay_ms(500);
           break;
 
       case EPD_CMD_SLEEP:
           p_epd->driver->sleep();
-          DEV_Delay_ms(200);
           break;
 
       case EPD_CMD_SET_CONFIG:
@@ -158,7 +156,7 @@ static void epd_service_process(ble_epd_t * p_epd, uint8_t * p_data, uint16_t le
           break;
 
       case EPD_CMD_SYS_RESET:
-          NVIC_SystemReset();
+          sd_nvic_SystemReset();
           break;
 
       case EPD_CMD_SYS_SLEEP:
@@ -169,7 +167,7 @@ static void epd_service_process(ble_epd_t * p_epd, uint8_t * p_data, uint16_t le
       case EPD_CMD_CFG_ERASE:
           epd_config_clear(&p_epd->config);
           nrf_delay_ms(10); // required
-          NVIC_SystemReset();
+          sd_nvic_SystemReset();
           break;
 
       default:

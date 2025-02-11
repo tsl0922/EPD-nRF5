@@ -140,8 +140,8 @@ typedef struct _u8g2_font_t
 
     int8_t glyph_x_offset;           /* set by u8g2_GetGlyphWidth as a side effect */
 
-    void *draw_hv_line_arg;
-    void (*draw_hv_line)(int16_t x, int16_t y, int16_t len, uint8_t dir, uint16_t color, void *arg);
+    void (*draw_hv_line)(struct _u8g2_font_t *u8g2, int16_t x, int16_t y,
+                         int16_t len, uint8_t dir, uint16_t color);
 } u8g2_font_t;
 
 uint8_t u8g2_IsGlyph(u8g2_font_t *u8g2, uint16_t requested_encoding);

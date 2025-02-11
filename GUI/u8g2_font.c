@@ -288,11 +288,11 @@ static void u8g2_font_decode_len(u8g2_font_t *u8g2, uint8_t len, uint8_t is_fore
         {
             if ( is_foreground )
             {
-                u8g2->draw_hv_line(x, y, current, decode->dir, decode->fg_color, u8g2->draw_hv_line_arg);
+                u8g2->draw_hv_line(u8g2, x, y, current, decode->dir, decode->fg_color);
             }
             else if ( decode->is_transparent == 0 )    
             {
-                u8g2->draw_hv_line(x, y, current, decode->dir, decode->bg_color, u8g2->draw_hv_line_arg);
+                u8g2->draw_hv_line(u8g2, x, y, current, decode->dir, decode->bg_color);
             }
         }
         
