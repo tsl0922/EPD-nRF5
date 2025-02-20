@@ -161,6 +161,11 @@ async function sendimg() {
   const imgArray = getImageData(canvas, driver, mode);
   const ramSize = canvas.width * canvas.height / 8;
 
+  if (mode === '') {
+    addLog('请选择一种取模算法！');
+    return;
+  }
+
   if (imgArray.length == ramSize * 2) {
     await epdWrite(0x10, imgArray.slice(0, ramSize));
     await epdWrite(0x13, imgArray.slice(ramSize));
@@ -255,6 +260,7 @@ async function connect() {
       addLog(`<span class="action">⇓</span> ${bytes2hex(event.target.value.buffer)}`);
       document.getElementById("epdpins").value = bytes2hex(event.target.value.buffer.slice(0, 7));
       document.getElementById("epddriver").value = bytes2hex(event.target.value.buffer.slice(7, 8));
+      filterDitheringOptions();
     });
 
     await write(EpdCmd.INIT);
@@ -305,7 +311,7 @@ function intToHex(intIn) {
   return stringOut.substring(2, 4) + stringOut.substring(0, 2);
 }
 
-async function update_image () {
+async function update_image() {
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
 
@@ -336,6 +342,8 @@ function clear_canvas() {
 function convert_dithering() {
   const ctx = canvas.getContext("2d");
   const mode = document.getElementById('dithering').value;
+  if (mode === '') return;
+
   if (mode.startsWith('bwr')) {
     ditheringCanvasByPalette(canvas, bwrPalette, mode);
   } else if (mode === '4gray') {
@@ -345,11 +353,26 @@ function convert_dithering() {
   }
 }
 
+function filterDitheringOptions() {
+  const driver = document.getElementById('epddriver').value;
+  const dithering = document.getElementById('dithering');
+  for (let optgroup of dithering.getElementsByTagName('optgroup')) {
+    const drivers = optgroup.getAttribute('data-driver').split('|');
+    const show = drivers.includes(driver);
+    for (option of optgroup.getElementsByTagName('option')) {
+      if (show)
+        option.removeAttribute('disabled');
+      else
+        option.setAttribute('disabled', 'disabled');
+    }
+  }
+  dithering.value = '';
+}
+
 document.body.onload = () => {
   canvas = document.getElementById('canvas');
 
   updateButtonStatus();
   update_image();
-
-  document.getElementById('dithering').value = 'none';
+  filterDitheringOptions();
 }

@@ -26,13 +26,11 @@ uint32_t EPD_BS_PIN = 13;
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(0);
 
 extern epd_driver_t epd_driver_4in2;
-extern epd_driver_t epd_driver_4in2v2;
 extern epd_driver_t epd_driver_4in2bv2;
 
 /** EPD drivers */
 static epd_driver_t *epd_drivers[] = {
     &epd_driver_4in2,
-    &epd_driver_4in2v2,
     &epd_driver_4in2bv2,
 };
 
