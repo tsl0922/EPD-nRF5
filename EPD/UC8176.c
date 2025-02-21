@@ -101,6 +101,14 @@ void EPD_4IN2_Init(void)
 	EPD_WriteByte(0x97);            // LUTB=0 LUTW=1 interval=10
 }
 
+void EPD_4IN2B_V2_Init(void)
+{
+    EPD_4IN2_Reset();
+
+    EPD_WriteCommand(0x00);
+    EPD_WriteByte(0x0f);
+}
+
 /******************************************************************************
 function :	Clear screen
 parameter:
@@ -133,6 +141,7 @@ static void _setPartialRamArea(UWORD x, UWORD y, UWORD w, UWORD h)
   uint16_t xe = (x + w - 1) | 0x0007; // byte boundary inclusive (last byte)
   uint16_t ye = y + h - 1;
   x &= 0xFFF8; // byte boundary
+  xe |= 0x0007; // byte boundary
   EPD_WriteCommand(0x90); // partial window
   EPD_WriteByte(x / 256);
   EPD_WriteByte(x % 256);
@@ -162,6 +171,29 @@ void EPD_4IN2_Write_Image(UBYTE *black, UBYTE *color, UWORD x, UWORD y, UWORD w,
     EPD_WriteCommand(0x92); // partial out
 }
 
+void EPD_4IN2B_V2_Write_Image(UBYTE *black, UBYTE *color, UWORD x, UWORD y, UWORD w, UWORD h)
+{
+    UWORD wb = (w + 7) / 8; // width bytes, bitmaps are padded
+    x -= x % 8; // byte boundary
+    w = wb * 8; // byte boundary
+    if (x + w > EPD_4IN2_WIDTH || y + h > EPD_4IN2_HEIGHT) return;
+    EPD_WriteCommand(0x91); // partial in
+    _setPartialRamArea(x, y, w, h);
+    EPD_WriteCommand(0x10);
+    for (UWORD i = 0; i < h; i++) {
+        for (UWORD j = 0; j < w / 8; j++) {
+            EPD_WriteByte(black ? black[j + i * wb] : 0xFF);
+        }
+    }
+    EPD_WriteCommand(0x13);
+    for (UWORD i = 0; i < h; i++) {
+        for (UWORD j = 0; j < w / 8; j++) {
+            EPD_WriteByte(color ? color[j + i * wb] : 0xFF);
+        }
+    }
+    EPD_WriteCommand(0x92); // partial out
+}
+
 /******************************************************************************
 function :	Enter sleep mode
 parameter:
@@ -170,7 +202,7 @@ void EPD_4IN2_Sleep(void)
 {
 	EPD_4IN2_PowerOff();
 
-	EPD_WriteCommand(0x07); // deep sleep
+	EPD_WriteCommand(0x07);
 	EPD_WriteByte(0XA5);
 }
 
@@ -184,6 +216,20 @@ const epd_driver_t epd_driver_4in2 = {
 	.send_byte = EPD_WriteByte,
     .send_data = EPD_WriteData,
     .write_image = EPD_4IN2_Write_Image,
+    .refresh = EPD_4IN2_Refresh,
+    .sleep = EPD_4IN2_Sleep,
+};
+
+const epd_driver_t epd_driver_4in2bv2 = {
+    .id = EPD_DRIVER_4IN2B_V2,
+	.width = EPD_4IN2_WIDTH,
+	.height = EPD_4IN2_HEIGHT,
+    .init = EPD_4IN2B_V2_Init,
+    .clear = EPD_4IN2_Clear,
+    .send_command = EPD_WriteCommand,
+	.send_byte = EPD_WriteByte,
+    .send_data = EPD_WriteData,
+    .write_image = EPD_4IN2B_V2_Write_Image,
     .refresh = EPD_4IN2_Refresh,
     .sleep = EPD_4IN2_Sleep,
 };

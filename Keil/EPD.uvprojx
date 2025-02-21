@@ -415,14 +415,9 @@
               <FilePath>..\EPD\EPD_driver.c</FilePath>
             </File>
             <File>
-              <FileName>EPD_4in2.c</FileName>
+              <FileName>UC8176.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_4in2.c</FilePath>
-            </File>
-            <File>
-              <FileName>EPD_4in2b_V2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_4in2b_V2.c</FilePath>
+              <FilePath>..\EPD\UC8176.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -997,14 +992,9 @@
               <FilePath>..\EPD\EPD_driver.c</FilePath>
             </File>
             <File>
-              <FileName>EPD_4in2.c</FileName>
+              <FileName>UC8176.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_4in2.c</FilePath>
-            </File>
-            <File>
-              <FileName>EPD_4in2b_V2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_4in2b_V2.c</FilePath>
+              <FilePath>..\EPD\UC8176.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1579,14 +1569,9 @@
               <FilePath>..\EPD\EPD_driver.c</FilePath>
             </File>
             <File>
-              <FileName>EPD_4in2.c</FileName>
+              <FileName>UC8176.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_4in2.c</FilePath>
-            </File>
-            <File>
-              <FileName>EPD_4in2b_V2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\EPD\EPD_4in2b_V2.c</FilePath>
+              <FilePath>..\EPD\UC8176.c</FilePath>
             </File>
           </Files>
         </Group>
