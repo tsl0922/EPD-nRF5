@@ -60,15 +60,29 @@ void EPD_4IN2B_V2_ReadBusy(void)
     DEV_Delay_ms(50);
 }
 
+void EPD_4IN2B_V2_PowerOn(void)
+{
+    EPD_WriteCommand(0x04);
+	EPD_4IN2B_V2_ReadBusy();
+}
+
+void EPD_4IN2B_V2_PowerOff(void)
+{
+    EPD_WriteCommand(0x02);
+	EPD_4IN2B_V2_ReadBusy();
+}
+
 /******************************************************************************
 function :	Turn On Display
 parameter:
 ******************************************************************************/
-void EPD_4IN2B_V2_TurnOnDisplay(void)
+void EPD_4IN2B_V2_Refresh(void)
 {
+    EPD_4IN2B_V2_PowerOn();
     EPD_WriteCommand(0x12); // DISPLAY_REFRESH
     DEV_Delay_ms(100);
     EPD_4IN2B_V2_ReadBusy();
+    EPD_4IN2B_V2_PowerOff();
 }
 
 /******************************************************************************
@@ -81,8 +95,6 @@ void EPD_4IN2B_V2_Init(void)
 
     EPD_WriteCommand(0x00);
     EPD_WriteByte(0x0f);
-
-    EPD_WriteCommand(0x04); 
 }
 
 /******************************************************************************
@@ -109,7 +121,7 @@ void EPD_4IN2B_V2_Clear(void)
         }
     }
 
-    EPD_4IN2B_V2_TurnOnDisplay();
+    EPD_4IN2B_V2_Refresh();
 }
 
 static void _setPartialRamArea(UWORD x, UWORD y, UWORD w, UWORD h)
@@ -159,12 +171,9 @@ parameter:
 ******************************************************************************/
 void EPD_4IN2B_V2_Sleep(void)
 {
-    EPD_WriteCommand(0X50);
-    EPD_WriteByte(0xf7);		//border floating	
+    EPD_4IN2B_V2_PowerOff();
 
-    EPD_WriteCommand(0X02);  	//power off
-    EPD_4IN2B_V2_ReadBusy(); //waiting for the electronic paper IC to release the idle signal
-    EPD_WriteCommand(0X07);  	//deep sleep
+    EPD_WriteCommand(0X07); // deep sleep
     EPD_WriteByte(0xA5);
 }
 
@@ -178,6 +187,6 @@ const epd_driver_t epd_driver_4in2bv2 = {
 	.send_byte = EPD_WriteByte,
     .send_data = EPD_WriteData,
     .write_image = EPD_4IN2B_V2_Write_Image,
-    .display = EPD_4IN2B_V2_TurnOnDisplay,
+    .refresh = EPD_4IN2B_V2_Refresh,
     .sleep = EPD_4IN2B_V2_Sleep,
 };

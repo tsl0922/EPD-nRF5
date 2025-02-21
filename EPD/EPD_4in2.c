@@ -61,15 +61,29 @@ void EPD_4IN2_ReadBusy(void)
     }
 }
 
+void EPD_4IN2_PowerOn(void)
+{
+    EPD_WriteCommand(0x04);
+	EPD_4IN2_ReadBusy();
+}
+
+void EPD_4IN2_PowerOff(void)
+{
+    EPD_WriteCommand(0x02);
+	EPD_4IN2_ReadBusy();
+}
+
 /******************************************************************************
 function :	Turn On Display
 parameter:
 ******************************************************************************/
-void EPD_4IN2_TurnOnDisplay(void)
+void EPD_4IN2_Refresh(void)
 {
+    EPD_4IN2_PowerOn();
     EPD_WriteCommand(0x12);
     DEV_Delay_ms(100);
     EPD_4IN2_ReadBusy();
+    EPD_4IN2_PowerOff();
 }
 
 /******************************************************************************
@@ -83,16 +97,8 @@ void EPD_4IN2_Init(void)
 	EPD_WriteCommand(0x00);			// panel setting
 	EPD_WriteByte(0x1f);		    // 400x300 B/W mode, LUT from OTP
 
-	EPD_WriteCommand(0x61);			// resolution setting
-	EPD_WriteByte (EPD_4IN2_WIDTH / 256);
-	EPD_WriteByte (EPD_4IN2_WIDTH % 256);
-	EPD_WriteByte (EPD_4IN2_HEIGHT / 256);
-	EPD_WriteByte (EPD_4IN2_HEIGHT % 256);
-
 	EPD_WriteCommand(0x50);         // VCOM AND DATA INTERVAL SETTING
 	EPD_WriteByte(0x97);            // LUTB=0 LUTW=1 interval=10
-
-    EPD_WriteCommand(0x04);         // POWER ON
 }
 
 /******************************************************************************
@@ -119,7 +125,7 @@ void EPD_4IN2_Clear(void)
         }
     }
 
-    EPD_4IN2_TurnOnDisplay();
+    EPD_4IN2_Refresh();
 }
 
 static void _setPartialRamArea(UWORD x, UWORD y, UWORD w, UWORD h)
@@ -162,13 +168,9 @@ parameter:
 ******************************************************************************/
 void EPD_4IN2_Sleep(void)
 {
-	EPD_WriteCommand(0x50); // DEEP_SLEEP
-	EPD_WriteByte(0XF7);
+	EPD_4IN2_PowerOff();
 
-	EPD_WriteCommand(0x02); // POWER_OFF
-	EPD_4IN2_ReadBusy();
-
-	EPD_WriteCommand(0x07); // DEEP_SLEEP
+	EPD_WriteCommand(0x07); // deep sleep
 	EPD_WriteByte(0XA5);
 }
 
@@ -182,6 +184,6 @@ const epd_driver_t epd_driver_4in2 = {
 	.send_byte = EPD_WriteByte,
     .send_data = EPD_WriteData,
     .write_image = EPD_4IN2_Write_Image,
-    .display = EPD_4IN2_TurnOnDisplay,
+    .refresh = EPD_4IN2_Refresh,
     .sleep = EPD_4IN2_Sleep,
 };

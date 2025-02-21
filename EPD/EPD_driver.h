@@ -53,7 +53,7 @@ typedef struct
 	void (*send_byte)(UBYTE Reg);                     /**< send byte */
     void (*send_data)(UBYTE *Data, UBYTE Len);        /**< send data */
     void (*write_image)(UBYTE *black, UBYTE *color, UWORD x, UWORD y, UWORD w, UWORD h); /**< write image */
-    void (*display)(void);                            /**< Sends the image buffer in RAM to e-Paper and displays */
+    void (*refresh)(void);                            /**< Sends the image buffer in RAM to e-Paper and displays */
     void (*sleep)(void);                              /**< Enter sleep mode */
 } epd_driver_t;
 

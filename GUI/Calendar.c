@@ -103,6 +103,6 @@ void DrawCalendar(uint32_t timestamp)
     GFX_end(&gfx);
 
     NRF_LOG_PRINTF("display start\n");
-    driver->display();
+    driver->refresh();
     NRF_LOG_PRINTF("display end\n");
 }

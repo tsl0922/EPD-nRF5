@@ -142,7 +142,7 @@ static void epd_service_process(ble_epd_t * p_epd, uint8_t * p_data, uint16_t le
           break;
 
       case EPD_CMD_DISPLAY:
-          p_epd->driver->display();
+          p_epd->driver->refresh();
           break;
 
       case EPD_CMD_SLEEP:
