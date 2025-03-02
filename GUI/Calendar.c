@@ -37,7 +37,7 @@ static void DrawMonthDay(Adafruit_GFX *gfx, int16_t x, int16_t y, tm_t *tm, stru
 {
     if (day == tm->tm_mday)
     {
-        GFX_fillCircle(gfx, x + 10, y + 9, 22, GFX_RED);
+        GFX_fillCircle(gfx, x + 10, y + 9, 20, GFX_RED);
         GFX_setTextColor(gfx, GFX_WHITE, GFX_RED);
     }
     else
@@ -50,7 +50,7 @@ static void DrawMonthDay(Adafruit_GFX *gfx, int16_t x, int16_t y, tm_t *tm, stru
     GFX_printf(gfx, "%d", day);
 
     GFX_setFont(gfx, u8g2_font_wqy9_t_lunar);
-    GFX_setCursor(gfx, x, y + 24);
+    GFX_setCursor(gfx, x, y + 20);
     uint8_t JQdate;
     if (GetJieQi(tm->tm_year + YEAR0, tm->tm_mon + 1, day, &JQdate) && JQdate == day)
     {
@@ -80,6 +80,7 @@ void DrawCalendar(uint32_t timestamp)
 
     uint8_t firstDayWeek = get_first_day_week(tm.tm_year + YEAR0, tm.tm_mon + 1);
     uint8_t monthMaxDays = thisMonthMaxDays(tm.tm_year + YEAR0, tm.tm_mon + 1);
+    uint8_t monthDayRows = 1 + (monthMaxDays - (7 - firstDayWeek) + 6) / 7;
 
     Adafruit_GFX gfx;
 
@@ -96,8 +97,11 @@ void DrawCalendar(uint32_t timestamp)
         DrawDateHeader(&gfx, 10, 22, &tm, &Lunar);
         DrawWeekHeader(&gfx, 10, 26);
 
-        for (uint8_t i = 0; i < monthMaxDays; i++)
-            DrawMonthDay(&gfx, 22 + (firstDayWeek + i) % 7 * 55, 60 + (firstDayWeek + i) / 7 * 50, &tm, &Lunar, i + 1);
+        for (uint8_t i = 0; i < monthMaxDays; i++) {
+            int16_t x = 22 + (firstDayWeek + i) % 7 * 55;
+            int16_t y = (monthDayRows > 5 ? 60 : 65) + (firstDayWeek + i) / 7 * (monthDayRows > 5 ? 42 : 50);
+            DrawMonthDay(&gfx, x, y, &tm, &Lunar, i + 1);
+        }
     } while(GFX_nextPage(&gfx, driver->write_image));
 
     GFX_end(&gfx);
