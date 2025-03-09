@@ -6,9 +6,6 @@
 /**
  * 文字列表:
 所有 ASCII 字符 (32-128)
-
-未知
-农历
 正月二月三月四月五月六月七月八月九月十月
 冬月腊月
 闰
@@ -25,13 +22,16 @@
 星期
  */
 extern const uint8_t u8g2_font_wqy9_t_lunar[] U8G2_FONT_SECTION("u8g2_font_wqy9_t_lunar");
+
 /**
  * 文字列表:
-0123456789
 年月日
 星期
 一二三四五六
  */
-extern const uint8_t u8g2_font_wqy12b_t_lunar[] U8G2_FONT_SECTION("u8g2_font_wqy12b_t_lunar");
+extern const uint8_t u8g2_font_wqy12_t_lunar[] U8G2_FONT_SECTION("u8g2_font_wqy12_t_lunar");
 
+// 以下字库来自 u8g2，用于显示数字
+extern const uint8_t u8g2_font_helvB14_tn[] U8G2_FONT_SECTION("u8g2_font_helvB14_tn");
+extern const uint8_t u8g2_font_helvB18_tn[] U8G2_FONT_SECTION("u8g2_font_helvB18_tn");
 #endif

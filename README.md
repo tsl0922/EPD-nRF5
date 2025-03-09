@@ -4,7 +4,7 @@
 
 支持 nRF51/nRF52 MCU 作为主控，驱动 IC 为 UC8176 的 4.2 寸黑白/黑白红墨水屏，同时还支持自定义墨水屏到 MCU 的引脚映射，支持睡眠唤醒（NFC / 无线充电器）。
 
-![](html/images/3.jpg)
+![](docs/images/3.jpg)
 
 ## 支持设备
 
@@ -20,7 +20,7 @@
     线圈引脚：07
     ```
 
-    ![](html/images/1.jpg)
+    ![](docs/images/1.jpg)
 
 - 老五 4.2 寸价签，黑白红三色版本
 
@@ -35,7 +35,7 @@
     LED引脚：03/04/05 （有三个 LED，任选一个使用）
     ```
 
-    ![](html/images/2.jpg)
+    ![](docs/images/2.jpg)
 
 ## 上位机
 
@@ -45,29 +45,29 @@
 - 演示：https://www.bilibili.com/video/BV1KWAVe1EKs
 - 交流群: [1033086563](https://qm.qq.com/q/SckzhfDxuu) (点击链接加入群聊)
 
-![](html/images/0.jpg)
+![](docs/images/0.jpg)
 
 
 ## 开发
 
 > **注意:**
-> - 必须使用 [Keil 5.36](https://img.anfulai.cn/bbs/96992/MDK536.EXE) 或以下版本，nRF51 SDK 只支持 V5 版本的 ARM 编译器，从 5.37 版本开始 Keil 已经不再内置 V5 版本编译器
+> - 推荐使用 [Keil 5.36](https://img.anfulai.cn/bbs/96992/MDK536.EXE) 或以下版本， 从 Keil 5.37 版本开始已经不再内置 nRF5 SDK 所需的 V5 版本 ARM 编译器
 > - `sdk10` 分支为旧版 SDK 代码，蓝牙协议栈占用的空间小一些，用于支持 128K Flash 芯片
 
 项目配置有几个 `Target`：
 
-- `nRF51802_xxAA`: 用于编译 256K Flash 固件
+- `nRF51822_xxAA`: 用于编译 256K Flash 固件
 - `flash_softdevice`: 刷蓝牙协议栈用（只需刷一次）
 
 烧录器可以使用 J-Link 或者 DAPLink（可使用 [RTTView](https://github.com/XIVN1987/RTTView) 查看 RTT 日志）。
 
 **刷机流程:**
 
-> 如不修改代码，强烈建议到 [Releases](https://github.com/tsl0922/EPD-nRF5/releases) 下载二进制固件，**不需要单独下载蓝牙协议栈**。
+> **注意:** 这是自己编译代码的刷机流程。如不改代码，强烈建议到 [Releases](https://github.com/tsl0922/EPD-nRF5/releases) 下载编译好的固件，**不需要单独下载蓝牙协议栈**，且有 [烧录教程](https://www.bilibili.com/opus/1042166787832021028) （没有 Keil 开发经验的，请不要给自己找麻烦去编译）
 
 1. 全部擦除 (Keil 擦除后刷不了的话，使用烧录器的上位机软件擦除试试)
 2. 切换到 `flash_softdevice`，下载蓝牙协议栈，**不要编译直接下载**（只需刷一次）
-3. 切换到 `nRF51802_xxAA`，先编译再下载
+3. 切换到 `nRF51822_xxAA`，先编译再下载
 
 ## 附录
 

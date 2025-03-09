@@ -137,10 +137,8 @@ void UC8176_Init(epd_res_t res, bool bwr)
     EPD_WriteCommand(CMD_PSR);
     EPD_WriteByte(psr);
 
-    if (!EPD_BWR_MODE) {
-        EPD_WriteCommand(CMD_CDI);
-        EPD_WriteByte(0x97);
-    }
+    EPD_WriteCommand(CMD_CDI);
+    EPD_WriteByte(EPD_BWR_MODE ? 0xF7 : 0xD7);
 }
 
 /******************************************************************************
@@ -224,7 +222,7 @@ void UC8176_Sleep(void)
     UC8176_PowerOff();
 
     EPD_WriteCommand(CMD_DSLP);
-    EPD_WriteByte(0XA5);
+    EPD_WriteByte(0xA5);
 }
 
 // Declare driver and models
