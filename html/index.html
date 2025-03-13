@@ -48,6 +48,7 @@
 						<option value="01">UC8176（黑白屏）</option>
 						<option value="03">UC8176（三色屏）</option>
 						<option value="05">UC8276（三色屏）</option>
+						<option value="04">SSD1619（黑白屏）</option>
 						<option value="02">SSD1619（三色屏）</option>
 					</select>
 					<label for="epdpins">引脚</label>
@@ -83,7 +84,7 @@
 						<input type="file" id="image_file" onchange="update_image()" accept=".png,.jpg,.bmp,.webp,.jpeg">
 						<label for="dithering">取模算法</label>
 						<select id="dithering" title="取模算法" onchange="update_image()">
-							<optgroup data-driver="01" label="黑白">
+							<optgroup data-driver="01|04" label="黑白">
 								<option value="none">二值化</option>
 								<option value="bayer">bayer</option>
 								<option value="floydsteinberg">floydsteinberg</option>
@@ -116,7 +117,7 @@
 				<li><b>引脚配置：</b>格式为十六进制，顺序：MOSI/SCLK/CS/DC/RST/BUSY/BS/EN，前面 7 个引脚配置为必须，EN 为可选（没有用到的引脚可配置为 <code>FF</code>）</li>
 				<li><b>确认间隔: </b>这个间隔指的是数据包数量间隔，即发送此数量的不确认响应的数据包后才发送一次需确认响应的数据包。加大此值可优化传图速度，但是丢包风险也更大（你可能会发现图片有部分位置显示不正常，此时需调小这个值）
 				<li><b>指令列表: </b>支持的指令可在项目 README 查询（此功能一般只会在开发测试时用到）
-				<li><b>灰度：</b>目前仅 <code>EPD_4in2</code> 驱动支持 4 级灰度，其它驱动选择此选项结果未知</li>
+				<li><b>灰度：</b>目前仅 <code>UC8176（黑白屏）</code> 驱动支持 4 级灰度，其它驱动选择此选项结果未知</li>
 				<li><b>开源地址：</b>
 					<a href="https://github.com/tsl0922/EPD-nRF5">tsl0922/EPD-nRF5</a>,
 					交流群：<a href="https://qm.qq.com/q/SckzhfDxuu">1033086563</a>

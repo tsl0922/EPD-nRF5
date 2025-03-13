@@ -171,7 +171,7 @@ async function sendimg() {
     await epdWrite(driver === "02" ? 0x24 : 0x10, imgArray.slice(0, ramSize));
     await epdWrite(driver === "02" ? 0x26 : 0x13, imgArray.slice(ramSize));
   } else {
-    await epdWrite(driver === "03" ? 0x10 : 0x13, imgArray);
+    await epdWrite(driver === "04" ? 0x24 : 0x13, imgArray);
   }
 
   if (mode === "4gray") {
