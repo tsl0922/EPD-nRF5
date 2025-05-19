@@ -415,11 +415,182 @@ function checkDebugMode() {
   }
 }
 
+
+//add new function
+function OpenPaintMode(){
+  const image_mode = document.getElementById('canvas-mode');
+  const paint_size = document.getElementById('paint-size');
+  const paint_color = document.getElementById('paint-color');
+  const editor = document.getElementById('edit-font');
+  const font = document.getElementById('font');
+  image_mode.value = 'paint';
+  paint_color.value = 'black';
+  font.value = '黑体';
+  editor.onmousemove = function (e) {
+    editor.style.fontSize = `${paint_size.value * 10}px`;
+    editor.style.color = paint_color.value;
+    editor.style.fontFamily = font.value;
+    editor.style.fontWeight = 'bold';
+
+    if (is_allow_move_editor) {
+      const {x, y} = get_position(canvas, e.clientX, e.clientY);
+      if (x < 0 || y < 0 || x > canvas.width || y > canvas.height) {
+        return;
+      }
+
+      editor.style.left = `${e.clientX+window.scrollX-20}px`;
+      editor.style.top = `${e.clientY+window.scrollY-20}px`;
+
+    }
+  }
+
+  editor.onmousedown = function (e) {
+    is_allow_move_editor = true;
+  }
+
+  editor.onmouseup = function (e) {
+    is_allow_move_editor = false;
+  }
+
+  document.getElementById('update-text').onclick = function () {
+    if (!editor.value.length) {
+      alert('请先输入文字');
+      return;
+    }
+    editor.style.display = 'none';
+    ctx.beginPath();
+    ctx.font = `bold ${paint_size.value * 10}px ${font.value}`;
+    ctx.fillStyle = paint_color.value;
+    const {x, y} = get_position(canvas, parseInt(editor.style.left), parseInt(editor.style.top) + paint_size.value * 10);
+    const paragraphs = editor.value.split('\n');
+    //alert(paragraphs)
+    pad=0;
+    paragraphs.forEach(paragraph =>{   
+      ctx.fillText(paragraph, x+window.scrollX, y-window.scrollY+pad*paint_size.value*10);
+      //alert(y-window.scrollY+pad);
+      pad++;
+      } 
+    );
+
+
+    //ctx.fillText(editor.value, x+window.scrollX, y-window.scrollY);
+  }
+
+  image_mode.onchange = function (e) {
+    if (image_mode.value === 'font') {
+      document.getElementById('update-text').style.display = 'inline-block';
+      document.getElementById('font').style.display = 'inline-block';
+
+      editor.style.display='block';
+      editor.style.left = `${e.clientX}px`;
+      editor.style.top = `${e.clientY}px`;
+      return;
+    }
+    document.getElementById('update-text').style.display = 'none';
+    document.getElementById('font').style.display = 'none';
+    editor.style.display='none';
+  }
+
+  paint_size.onchange = function () {
+    if (image_mode.value === 'font') {
+      editor.style.fontSize =  `${paint_size.value * 10}px`;
+    }
+  }
+
+  paint_color.onchange = function () {
+    if (image_mode.value === 'font') {
+      editor.style.color = paint_color.value;
+    }
+  }
+
+  font.onchange = function () {
+    if (image_mode.value === 'font') {
+      editor.style.fontFamily = font.value;
+    }
+  }
+
+  canvas.onmousedown = function(e) {
+    let ele = get_position(canvas, e.clientX, e.clientY)
+    let { x, y } = ele
+
+    switch (image_mode.value) {
+      case 'paint':
+        is_allow_drawing = true;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        break;
+      case 'font':
+        editor.style.display='block';
+        editor.style.left = `${e.clientX+window.scrollX}px`;
+        editor.style.top = `${e.clientY+window.scrollY}px`;
+        editor.style.fontSize = `${paint_size.value * 10}px`;
+        editor.style.color = paint_color.value;
+        editor.style.fontFamily = font.value;
+        editor.style.fontWeight = 'bold';
+
+        break
+      default:
+        break;
+    }
+  };
+
+  canvas.onmousemove = (e) => {
+    let ele = get_position(canvas, e.clientX, e.clientY)
+    let { x, y } = ele;
+    switch (image_mode.value) {
+      case 'paint':
+        if (is_allow_drawing) {
+          ctx.lineWidth = paint_size.value;
+          ctx.strokeStyle=paint_color.value;
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+        break;
+      case 'font':
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  canvas.onmouseup = function() {
+    switch (image_mode.value) {
+      case 'paint':
+        is_allow_drawing = false;
+        break;
+
+      case 'font':
+        editor.focus();
+        is_allow_move_editor = false;
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  canvas.onmouseleave = function () {
+    if (image_mode.value === 'paint') {
+      is_allow_drawing = false;
+    }
+  }
+  function get_position(canvas, x, y){
+    let rect = canvas.getBoundingClientRect()
+    return {
+      x: x - rect.left * (canvas.width/rect.width),
+      y: y - rect.top * (canvas.height/rect.height)
+      // x: (pageX - rect.left - window.scrollX) * (canvas.width / rect.width),
+      // y: (pageY - rect.top - window.scrollY) * (canvas.height / rect.height)
+    }
+  }
+}
+
 document.body.onload = () => {
   textDecoder = null;
   canvas = document.getElementById('canvas');
   ctx = canvas.getContext("2d");
-
+  OpenPaintMode();
   updateButtonStatus();
   update_image();
   filterDitheringOptions();
