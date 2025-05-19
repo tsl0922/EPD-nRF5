@@ -76,6 +76,34 @@
 					<label for="interleavedcount">确认间隔</label>
 					<input type="number" id="interleavedcount" value="50" min="0" max="500">
 				</div>
+				<div id="canvas-box">
+					<div id="tool-box">
+						模式：
+						<select id="canvas-mode">
+							<option value="paint">画笔</option>
+							<option value="font" title="输入完成后 点击：保存文本框">输入文字</option>
+						</select>
+						画笔/文字大小：
+						<input type="number" max="13" min="1" step="1" value="3" id="paint-size">
+						画笔颜色：
+						<select id="paint-color">
+							<option value="red">红色</option>
+							<option value="white">白色</option>
+							<option value="black">黑色</option>
+						</select>
+			
+						<select id="font" title="字体" style="display: none;">
+							<option value="微软雅黑">微软雅黑</option>
+							<option value="黑体">黑体</option>
+							<option value="仿宋">仿宋</option>
+							<option value="宋体">宋体</option>
+							<option value="楷体_GB2312">楷体_GB2312</option>
+							<option value="华文行楷">华文行楷</option>
+						</select>
+						<button id="update-text" style="display: none">保存文本框</button>
+					</div>
+					<textarea id="edit-font" style="max-width: 400px; position: absolute; border: black solid 1px;background-color: rgba(0,0,0,0);display: none;overflow: auto"></textarea>
+				</div>
 			</div>
 			<div class="status-bar"><b>状态：</b><span id="status"></span></div>
 			<div class="flex-container">
