@@ -230,7 +230,12 @@ async function sendimg() {
       await writeImage(redWhiteData, 'red');
     }
   } else if (ditherMode === 'blackWhiteColor') {
-    await writeImage(processedData, 'bw');
+    if (epdDriverSelect.value === '08' || epdDriverSelect.value === '09') {
+      const emptyData = new Uint8Array(processedData.length).fill(0xFF);
+      await writeImage(convertUC8159(processedData, emptyData), 'bw');
+    } else {
+      await writeImage(processedData, 'bw');
+    }
   } else {
     addLog("当前固件不支持此颜色模式。");
     updateButtonStatus();
