@@ -109,7 +109,7 @@ static bool GetFestival(uint16_t year, uint8_t mon, uint8_t day, uint8_t week, s
 
 static void DrawTimeSyncTip(Adafruit_GFX* gfx, gui_data_t* data) {
     const char* title = "SYNC TIME!";
-    const char* url = "https://tsl0922.github.io/EPD-nRF5";
+    const char* url = "https://ycd12.github.io/EPD-nRF5_DYC/";
 
     GFX_setFont(gfx, u8g2_font_wqy9_t_lunar);
 
