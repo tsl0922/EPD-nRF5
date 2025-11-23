@@ -151,7 +151,11 @@ void JD79665_Init(epd_model_t* epd) {
     EPD_Write(UC81xx_TRES, epd->width / 256, epd->width % 256, epd->height / 256, epd->height % 256);
     // EPD_Write(0x62, 0x98, 0x98, 0x98, 0x75, 0xCA, 0xB2, 0x98, 0x7E);
 
-    EPD_Write(UC81xx_GSST, 0x00, 0x00, 0x00, 0x00);
+    if (epd->id == EPD_JD79665_750_BWRY) {
+        EPD_Write(UC81xx_GSST, 0x00, 0x00, 0x00, 0x00);
+    } else {
+        EPD_Write(UC81xx_GSST, 0x00, 0x10, 0x00, 0x00);
+    }
 
     // EPD_Write(0xE7, 0x1C);
     EPD_Write(0xE9, 0x01);
@@ -422,3 +426,5 @@ const epd_model_t epd_uc8179_750_bwr = {EPD_UC8179_750_BWR, BWR, &epd_drv_uc8179
 const epd_model_t epd_jd79668_420_bwry = {EPD_JD79668_420_BWRY, BWRY, &epd_drv_jd79668, 400, 300};
 // JD79665 800x480 Black/White/Red/Yellow
 const epd_model_t epd_jd79665_750_bwry = {EPD_JD79665_750_BWRY, BWRY, &epd_drv_jd79665, 800, 480};
+// JD79665 648x480 Black/White/Red/Yellow
+const epd_model_t epd_jd79665_583_bwry = {EPD_JD79665_583_BWRY, BWRY, &epd_drv_jd79665, 648, 480};
