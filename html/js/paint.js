@@ -18,6 +18,28 @@ class PaintManager {
     this.dragOffsetY = 0;
     this.textBold = false;
     this.textItalic = false;
+    this.todoItems = [];
+    this.isTodoPlacementMode = false;
+    this.selectedTodoItem = null;
+    this.todoBold = false;
+    this.todoItalic = false;
+    this.todoColor = '#000000';
+    this.showTodoDeleteButtons = true; // Toggle for showing/hiding delete buttons
+
+    // Schedule (timetable) properties
+    this.scheduleData = null; // 2D array to store schedule data
+    this.scheduleDays = 5;
+    this.scheduleClasses = 6;
+    this.scheduleFontFamily = 'SimHei';
+    this.scheduleFontSize = 12;
+    this.scheduleColor = '#000000';
+    this.scheduleStartX = 20;
+    this.scheduleStartY = 20;
+    this.scheduleCellWidth = 60;
+    this.scheduleCellHeight = 35;
+    this.weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    this.selectedScheduleCell = null; // For editing schedule cells
+    this.showScheduleCellIndicator = true; // Toggle for showing/hiding cell selection indicator
 
     // Brush cursor indicator
     this.brushCursor = null;
@@ -48,7 +70,9 @@ class PaintManager {
     const canvasState = {
       imageData: this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height),
       textElements: JSON.parse(JSON.stringify(this.textElements)),
-      lineSegments: JSON.parse(JSON.stringify(this.lineSegments))
+      lineSegments: JSON.parse(JSON.stringify(this.lineSegments)),
+      todoItems: JSON.parse(JSON.stringify(this.todoItems)),
+      scheduleData: this.scheduleData ? JSON.parse(JSON.stringify(this.scheduleData)) : null
     };
 
     this.historyStack.push(canvasState);
@@ -61,6 +85,66 @@ class PaintManager {
     }
 
     this.updateUndoRedoButtons();
+
+    // Auto-save to localStorage
+    this.saveCanvasToLocalStorage();
+  }
+
+  saveCanvasToLocalStorage() {
+    try {
+      const canvasData = {
+        imageData: this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height).data.join(','),
+        textElements: this.textElements,
+        lineSegments: this.lineSegments,
+        todoItems: this.todoItems,
+        scheduleData: this.scheduleData,
+        width: this.canvas.width,
+        height: this.canvas.height
+      };
+      localStorage.setItem('canvasState', JSON.stringify(canvasData));
+    } catch (e) {
+      console.error('Failed to save canvas to localStorage:', e);
+    }
+  }
+
+  loadCanvasFromLocalStorage() {
+    try {
+      const savedData = localStorage.getItem('canvasState');
+      if (!savedData) return false;
+
+      const canvasData = JSON.parse(savedData);
+
+      // Verify dimensions match
+      if (canvasData.width !== this.canvas.width || canvasData.height !== this.canvas.height) {
+        return false;
+      }
+
+      // Restore image data
+      const imageArray = canvasData.imageData.split(',').map(Number);
+      const imageData = this.ctx.createImageData(this.canvas.width, this.canvas.height);
+      imageData.data.set(imageArray);
+      this.ctx.putImageData(imageData, 0, 0);
+
+      // Restore elements
+      this.textElements = canvasData.textElements || [];
+      this.lineSegments = canvasData.lineSegments || [];
+      this.todoItems = canvasData.todoItems || [];
+      this.scheduleData = canvasData.scheduleData || null;
+
+      this.saveToHistory();
+      return true;
+    } catch (e) {
+      console.error('Failed to load canvas from localStorage:', e);
+      return false;
+    }
+  }
+
+  clearCanvasCache() {
+    try {
+      localStorage.removeItem('canvasState');
+    } catch (e) {
+      console.error('Failed to clear canvas cache:', e);
+    }
   }
 
   undo() {
@@ -87,6 +171,8 @@ class PaintManager {
       // Restore text and line data
       this.textElements = JSON.parse(JSON.stringify(state.textElements));
       this.lineSegments = JSON.parse(JSON.stringify(state.lineSegments));
+      this.todoItems = JSON.parse(JSON.stringify(state.todoItems || []));
+      this.scheduleData = state.scheduleData ? JSON.parse(JSON.stringify(state.scheduleData)) : null;
 
       this.updateUndoRedoButtons();
     }
@@ -144,6 +230,109 @@ class PaintManager {
 
     document.getElementById('add-text-btn').addEventListener('click', () => this.startTextPlacement());
 
+    document.getElementById('todo-mode').addEventListener('click', () => {
+      if (this.currentTool === 'todo') {
+        this.setActiveTool(null, '');
+      } else {
+        // Load cached canvas data if available
+        this.loadCanvasFromLocalStorage();
+        this.setActiveTool('todo', '添加待办项');
+        this.brushColor = document.getElementById('brush-color').value;
+      }
+    });
+
+    document.getElementById('add-todo-btn').addEventListener('click', () => this.startTodoPlacement());
+
+    document.getElementById('schedule-mode').addEventListener('click', () => {
+      if (this.currentTool === 'schedule') {
+        this.setActiveTool(null, '');
+      } else {
+        // Load cached schedule data if available
+        this.loadScheduleFromLocalStorage();
+        this.setActiveTool('schedule', '生成课表');
+      }
+    });
+
+    document.getElementById('create-schedule-btn').addEventListener('click', () => this.createSchedule());
+
+    document.getElementById('toggle-schedule-cell-indicator-btn').addEventListener('click', () => {
+      this.showScheduleCellIndicator = !this.showScheduleCellIndicator;
+      document.getElementById('toggle-schedule-cell-indicator-btn').classList.toggle('primary', this.showScheduleCellIndicator);
+      if (this.scheduleData) {
+        this.redrawAll();
+      }
+    });
+
+    document.getElementById('schedule-input-confirm-btn').addEventListener('click', () => this.confirmScheduleInput());
+    document.getElementById('schedule-input-cancel-btn').addEventListener('click', () => this.cancelScheduleInput());
+    document.getElementById('schedule-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') this.confirmScheduleInput();
+    });
+
+    // Schedule font size adjustment buttons
+    document.getElementById('schedule-font-increase-btn').addEventListener('click', () => {
+      this.scheduleFontSize = Math.min(this.scheduleFontSize + 1, 32);
+      document.getElementById('schedule-font-size').value = this.scheduleFontSize;
+      if (this.scheduleData) {
+        this.calculateScheduleDimensions();
+        this.redrawAll();
+      }
+    });
+
+    document.getElementById('schedule-font-decrease-btn').addEventListener('click', () => {
+      this.scheduleFontSize = Math.max(this.scheduleFontSize - 1, 8);
+      document.getElementById('schedule-font-size').value = this.scheduleFontSize;
+      if (this.scheduleData) {
+        this.calculateScheduleDimensions();
+        this.redrawAll();
+      }
+    });
+
+    // Schedule font size input change
+    document.getElementById('schedule-font-size').addEventListener('change', (e) => {
+      this.scheduleFontSize = parseInt(e.target.value);
+      if (this.scheduleData) {
+        this.calculateScheduleDimensions();
+        this.redrawAll();
+      }
+    });
+
+    // Schedule move buttons
+    document.getElementById('schedule-move-up-btn').addEventListener('click', () => {
+      this.scheduleStartY = Math.max(this.scheduleStartY - 10, 5);
+      if (this.scheduleData) this.redrawAll();
+    });
+
+    document.getElementById('schedule-move-down-btn').addEventListener('click', () => {
+      const maxY = this.canvas.height - (this.scheduleClasses + 1) * this.scheduleCellHeight - 5;
+      this.scheduleStartY = Math.min(this.scheduleStartY + 10, maxY);
+      if (this.scheduleData) this.redrawAll();
+    });
+
+    document.getElementById('schedule-move-left-btn').addEventListener('click', () => {
+      this.scheduleStartX = Math.max(this.scheduleStartX - 10, 5);
+      if (this.scheduleData) this.redrawAll();
+    });
+
+    document.getElementById('schedule-move-right-btn').addEventListener('click', () => {
+      const maxX = this.canvas.width - (this.scheduleDays + 1) * this.scheduleCellWidth - 5;
+      this.scheduleStartX = Math.min(this.scheduleStartX + 10, maxX);
+      if (this.scheduleData) this.redrawAll();
+    });
+
+    // Schedule zoom buttons
+    document.getElementById('schedule-zoom-in-btn').addEventListener('click', () => {
+      this.scheduleCellWidth = Math.min(this.scheduleCellWidth + 5, 200);
+      this.scheduleCellHeight = Math.min(this.scheduleCellHeight + 5, 100);
+      if (this.scheduleData) this.redrawAll();
+    });
+
+    document.getElementById('schedule-zoom-out-btn').addEventListener('click', () => {
+      this.scheduleCellWidth = Math.max(this.scheduleCellWidth - 5, 30);
+      this.scheduleCellHeight = Math.max(this.scheduleCellHeight - 5, 20);
+      if (this.scheduleData) this.redrawAll();
+    });
+
     // Add event listeners for bold and italic buttons
     document.getElementById('text-bold').addEventListener('click', () => {
       this.textBold = !this.textBold;
@@ -153,6 +342,28 @@ class PaintManager {
     document.getElementById('text-italic').addEventListener('click', () => {
       this.textItalic = !this.textItalic;
       document.getElementById('text-italic').classList.toggle('primary', this.textItalic);
+    });
+
+    // Add event listeners for todo bold and italic buttons
+    document.getElementById('todo-bold').addEventListener('click', () => {
+      this.todoBold = !this.todoBold;
+      document.getElementById('todo-bold').classList.toggle('primary', this.todoBold);
+    });
+
+    document.getElementById('todo-italic').addEventListener('click', () => {
+      this.todoItalic = !this.todoItalic;
+      document.getElementById('todo-italic').classList.toggle('primary', this.todoItalic);
+    });
+
+    document.getElementById('todo-color').addEventListener('change', (e) => {
+      this.todoColor = e.target.value;
+    });
+
+    document.getElementById('toggle-todo-delete-btn').addEventListener('click', () => {
+      this.showTodoDeleteButtons = !this.showTodoDeleteButtons;
+      document.getElementById('toggle-todo-delete-btn').classList.toggle('primary', this.showTodoDeleteButtons);
+      // Redraw all todo items with the new visibility state
+      this.redrawAll();
     });
 
     // Add undo/redo button listeners
@@ -204,13 +415,17 @@ class PaintManager {
     this.canvas.parentNode.classList.toggle('brush-mode', this.currentTool === 'brush');
     this.canvas.parentNode.classList.toggle('eraser-mode', this.currentTool === 'eraser');
     this.canvas.parentNode.classList.toggle('text-mode', this.currentTool === 'text');
+    this.canvas.parentNode.classList.toggle('todo-mode', this.currentTool === 'todo');
+    this.canvas.parentNode.classList.toggle('schedule-mode', this.currentTool === 'schedule');
 
     document.getElementById('brush-mode').classList.toggle('active', this.currentTool === 'brush');
     document.getElementById('eraser-mode').classList.toggle('active', this.currentTool === 'eraser');
     document.getElementById('text-mode').classList.toggle('active', this.currentTool === 'text');
+    document.getElementById('todo-mode').classList.toggle('active', this.currentTool === 'todo');
+    document.getElementById('schedule-mode').classList.toggle('active', this.currentTool === 'schedule');
 
-    document.getElementById('brush-color').disabled = this.currentTool === 'eraser';
-    document.getElementById('brush-size').disabled = this.currentTool === 'text';
+    document.getElementById('brush-color').disabled = this.currentTool === 'eraser' || this.currentTool === 'todo' || this.currentTool === 'schedule';
+    document.getElementById('brush-size').disabled = this.currentTool === 'text' || this.currentTool === 'todo' || this.currentTool === 'schedule';
 
     document.getElementById('undo-btn').classList.toggle('hide', this.currentTool === null);
     document.getElementById('redo-btn').classList.toggle('hide', this.currentTool === null);
@@ -320,8 +535,12 @@ class PaintManager {
     if (this.currentTool === 'text') {
       // Check if we're clicking on a text element to drag
       const textElement = this.findTextElementAt(e);
-      if (textElement && textElement === this.selectedTextElement) {
+      if (textElement) {
         this.isDraggingText = true;
+        this.selectedTextElement = textElement;
+
+        // Save current canvas state for dragging
+        this.draggingCanvasContext = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
@@ -335,6 +554,38 @@ class PaintManager {
 
         return; // Don't start drawing
       }
+    } else if (this.currentTool === 'todo') {
+      // Check if we're clicking on a delete button first
+      const deleteButtonTodo = this.findTodoDeleteButtonAt(e);
+      if (deleteButtonTodo) {
+        this.deleteTodoItem(deleteButtonTodo);
+        return;
+      }
+
+      // Check if we're clicking on a todo item to drag
+      const todoItem = this.findTodoItemAt(e);
+      if (todoItem) {
+        this.isDraggingText = true;
+        this.selectedTodoItem = todoItem;
+
+        // Save current canvas state for dragging
+        this.draggingCanvasContext = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        // Calculate offset for smooth dragging
+        this.dragOffsetX = todoItem.x - x;
+        this.dragOffsetY = todoItem.y - y;
+
+        return; // Don't place new todo
+      }
+    } else if (this.currentTool === 'schedule') {
+      // Schedule mode - don't paint, handle through handleCanvasClick
+      return;
     } else {
       this.painting = true;
       this.draw(e);
@@ -342,8 +593,12 @@ class PaintManager {
   }
 
   endPaint() {
-    if (this.painting || this.isDraggingText) {
-      this.saveToHistory(); // Save state after drawing or dragging text
+    if (this.isDraggingText) {
+      // After dragging text or todo, redraw all elements to clean up old positions
+      this.redrawAll();
+      this.saveToHistory(); // Save state after dragging
+    } else if (this.painting) {
+      this.saveToHistory(); // Save state after drawing
     }
     this.painting = false;
     this.isDraggingText = false;
@@ -359,6 +614,10 @@ class PaintManager {
     if (this.currentTool === 'text') {
       if (this.isDraggingText && this.selectedTextElement) {
         this.dragText(e);
+      }
+    } else if (this.currentTool === 'todo') {
+      if (this.isDraggingText && this.selectedTodoItem) {
+        this.dragTodo(e);
       }
     } else {
       if (this.painting) {
@@ -420,6 +679,22 @@ class PaintManager {
   handleCanvasClick(e) {
     if (this.currentTool === 'text' && this.isTextPlacementMode) {
       this.placeText(e);
+    } else if (this.currentTool === 'todo' && this.isTodoPlacementMode) {
+      this.placeTodo(e);
+    } else if (this.currentTool === 'schedule') {
+      // Handle schedule cell click for editing
+      const cell = this.getScheduleCellAt(e);
+      if (cell) {
+        this.selectedScheduleCell = cell;
+        const currentText = this.scheduleData[cell.row][cell.col];
+        document.getElementById('schedule-input').value = currentText;
+        document.getElementById('schedule-input').focus();
+        // Show the input buttons by making the second flex-group visible
+        const allScheduleTools = document.querySelectorAll('.schedule-tools');
+        if (allScheduleTools.length > 1) {
+          allScheduleTools[1].style.display = 'flex';
+        }
+      }
     }
   }
 
@@ -471,15 +746,54 @@ class PaintManager {
     this.selectedTextElement.x = x + this.dragOffsetX;
     this.selectedTextElement.y = y + this.dragOffsetY;
 
-    // Redraw selected text element
+    // Restore the saved canvas state (with all other elements)
     if (this.draggingCanvasContext) {
       this.ctx.putImageData(this.draggingCanvasContext, 0, 0);
-    } else {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
+
+    // Redraw all other text elements (except the one being dragged)
+    this.textElements.forEach(item => {
+      if (item !== this.selectedTextElement) {
+        this.ctx.font = item.font;
+        this.ctx.fillStyle = item.color;
+        this.ctx.fillText(item.text, item.x, item.y);
+      }
+    });
+
+    // Redraw all todo items
+    this.redrawTodoItems();
+
+    // Draw the dragged text element on top
     this.ctx.font = this.selectedTextElement.font;
     this.ctx.fillStyle = this.selectedTextElement.color;
     this.ctx.fillText(this.selectedTextElement.text, this.selectedTextElement.x, this.selectedTextElement.y);
+  }
+
+  dragTodo(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    // Update todo position with offset
+    this.selectedTodoItem.x = x + this.dragOffsetX;
+    this.selectedTodoItem.y = y + this.dragOffsetY;
+
+    // Restore the saved canvas state (with all other elements)
+    if (this.draggingCanvasContext) {
+      this.ctx.putImageData(this.draggingCanvasContext, 0, 0);
+    }
+
+    // Redraw all other todo items (except the one being dragged)
+    this.todoItems.forEach(item => {
+      if (item !== this.selectedTodoItem) {
+        this.drawTodoItem(item);
+      }
+    });
+
+    // Draw the dragged todo item on top
+    this.drawTodoItem(this.selectedTodoItem);
   }
 
   findTextElementAt(e) {
@@ -515,6 +829,88 @@ class PaintManager {
     return null;
   }
 
+  findTodoItemAt(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    // Search through todo items in reverse order (top-most first)
+    for (let i = this.todoItems.length - 1; i >= 0; i--) {
+      const todo = this.todoItems[i];
+
+      // Calculate text dimensions
+      this.ctx.font = todo.font;
+      const textWidth = this.ctx.measureText(todo.text).width;
+
+      // Extract font size correctly from the font string
+      const fontSizeMatch = todo.font.match(/(\d+)px/);
+      const fontSize = fontSizeMatch ? parseInt(fontSizeMatch[1]) : 14;
+      const textHeight = fontSize * 1.2; // Approximate height
+
+      // Check if click is within todo bounds (allowing for some margin)
+      const margin = 5;
+      if (x >= todo.x - margin &&
+        x <= todo.x + textWidth + margin &&
+        y >= todo.y - textHeight + margin &&
+        y <= todo.y + margin) {
+        return todo;
+      }
+    }
+
+    return null;
+  }
+
+  findTodoDeleteButtonAt(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    // Search through todo items in reverse order (top-most first)
+    for (let i = this.todoItems.length - 1; i >= 0; i--) {
+      const todo = this.todoItems[i];
+
+      if (!todo.deleteButtonX || !todo.deleteButtonY || !todo.deleteButtonSize) {
+        continue;
+      }
+
+      // Check if click is within delete button bounds
+      if (x >= todo.deleteButtonX - 5 &&
+        x <= todo.deleteButtonX + 10 &&
+        y >= todo.deleteButtonY &&
+        y <= todo.deleteButtonY + todo.deleteButtonSize) {
+        return todo;
+      }
+    }
+
+    return null;
+  }
+
+  deleteTodoItem(todoItem) {
+    const index = this.todoItems.indexOf(todoItem);
+    if (index > -1) {
+      this.todoItems.splice(index, 1);
+      // Redraw canvas to remove the deleted todo item
+      this.redrawAll();
+      this.saveToHistory();
+    }
+  }
+
+  redrawAll() {
+    // Clear canvas to white background
+    this.ctx.fillStyle = 'white';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Redraw all elements in order
+    this.redrawLineSegments();
+    this.redrawTextElements();
+    this.redrawTodoItems();
+    this.drawSchedule(); // Redraw schedule if it exists
+  }
+
   startTextPlacement() {
     const text = document.getElementById('text-input').value.trim();
     if (!text) {
@@ -531,6 +927,7 @@ class PaintManager {
 
   cancelTextPlacement() {
     this.isTextPlacementMode = false;
+    this.isTodoPlacementMode = false;
     this.canvas.classList.remove('text-placement-mode');
 
     // reset dragging state
@@ -538,6 +935,7 @@ class PaintManager {
     this.dragOffsetX = 0;
     this.dragOffsetY = 0;
     this.selectedTextElement = null;
+    this.selectedTodoItem = null;
     this.draggingCanvasContext = null;
   }
 
@@ -618,8 +1016,336 @@ class PaintManager {
     });
   }
 
+  startTodoPlacement() {
+    const todo = document.getElementById('todo-input').value.trim();
+    if (!todo) {
+      alert('请输入待办项内容');
+      return;
+    }
+
+    this.isTodoPlacementMode = true;
+
+    // Add visual feedback
+    setCanvasTitle('点击画布放置待办项');
+    this.canvas.classList.add('text-placement-mode');
+  }
+
+  placeTodo(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    const todo = document.getElementById('todo-input').value;
+    const fontSize = document.getElementById('todo-font-size').value;
+    const fontFamily = document.getElementById('todo-font-family').value;
+
+    // Build font style string with bold and italic
+    let fontStyle = '';
+    if (this.todoItalic) fontStyle += 'italic ';
+    if (this.todoBold) fontStyle += 'bold ';
+    fontStyle += `${fontSize}px ${fontFamily}`;
+
+    // Create a new todo item
+    const newTodo = {
+      text: todo,
+      x: x,
+      y: y,
+      font: fontStyle,
+      color: this.todoColor,
+      completed: false
+    };
+
+    // Add to our list of todo items
+    this.todoItems.push(newTodo);
+
+    // Select this todo item for immediate dragging
+    this.selectedTodoItem = newTodo;
+    this.draggingCanvasContext = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+    // Draw todo on canvas
+    this.drawTodoItem(newTodo);
+
+    // Save to history after placing todo
+    this.saveToHistory();
+
+    // Reset
+    document.getElementById('todo-input').value = '';
+    this.isTodoPlacementMode = false;
+    this.canvas.classList.remove('text-placement-mode');
+    setCanvasTitle('拖动新添加待办项可调整位置');
+  }
+
+  drawTodoItem(todoItem) {
+    // Draw todo text
+    this.ctx.font = todoItem.font;
+    this.ctx.fillStyle = todoItem.color;
+    this.ctx.fillText(todoItem.text, todoItem.x, todoItem.y);
+
+    // Only draw delete button if showTodoDeleteButtons is true
+    if (this.showTodoDeleteButtons) {
+      // Calculate delete button position
+      const textWidth = this.ctx.measureText(todoItem.text).width;
+      const deleteButtonX = todoItem.x + textWidth + 5;
+      const deleteButtonY = todoItem.y;
+      const deleteButtonSize = 12;
+
+      // Draw delete button "×"
+      this.ctx.font = 'bold 14px Arial';
+      this.ctx.fillStyle = '#FF6B6B';
+      this.ctx.fillText('×', deleteButtonX, deleteButtonY);
+
+      // Store delete button coordinates for hit detection
+      todoItem.deleteButtonX = deleteButtonX;
+      todoItem.deleteButtonY = deleteButtonY - deleteButtonSize;
+      todoItem.deleteButtonSize = deleteButtonSize + 5;
+    }
+
+    // Draw strikethrough if completed
+    if (todoItem.completed) {
+      const textWidth = this.ctx.measureText(todoItem.text).width;
+      const strikeY = todoItem.y - 4;
+      this.ctx.strokeStyle = '#000000';
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+      this.ctx.moveTo(todoItem.x, strikeY);
+      this.ctx.lineTo(todoItem.x + textWidth, strikeY);
+      this.ctx.stroke();
+    }
+  }
+
+  redrawTodoItems() {
+    // Redraw all todo items
+    this.todoItems.forEach(item => {
+      this.drawTodoItem(item);
+    });
+  }
+
+  createSchedule() {
+    // Get schedule configuration from form inputs
+    this.scheduleDays = parseInt(document.getElementById('schedule-days').value);
+    this.scheduleClasses = parseInt(document.getElementById('schedule-classes').value);
+    this.scheduleFontFamily = document.getElementById('schedule-font-family').value;
+    this.scheduleFontSize = parseInt(document.getElementById('schedule-font-size').value);
+    this.scheduleColor = document.getElementById('schedule-color').value;
+
+    // Clear old content (drawings, text, todos) to make room for new schedule
+    this.lineSegments = [];
+    this.textElements = [];
+    this.todoItems = [];
+
+    // Calculate cell dimensions based on canvas
+    this.calculateScheduleDimensions();
+
+    // Initialize schedule data (2D array: rows = classes + 1 (header), cols = days + 1 (time col))
+    this.scheduleData = [];
+    for (let i = 0; i <= this.scheduleClasses; i++) {
+      this.scheduleData[i] = [];
+      for (let j = 0; j <= this.scheduleDays; j++) {
+        if (i === 0 && j === 0) {
+          this.scheduleData[i][j] = ''; // Top-left corner - leave empty
+        } else if (i === 0) {
+          this.scheduleData[i][j] = this.weekDays[j - 1]; // Header row - weekdays
+        } else if (j === 0) {
+          this.scheduleData[i][j] = `第${i}节`; // Time column
+        } else {
+          this.scheduleData[i][j] = ''; // Empty cells for courses
+        }
+      }
+    }
+
+    // Draw the schedule on canvas
+    this.redrawAll();
+    this.saveScheduleToLocalStorage(); // Save schedule to cache
+    this.saveToHistory();
+  }
+
+  calculateScheduleDimensions() {
+    // Calculate cell size based on canvas dimensions
+    const padding = 20;
+    const availableWidth = this.canvas.width - 2 * padding;
+    const availableHeight = this.canvas.height - 2 * padding;
+
+    // Calculate cell dimensions to fit content
+    const cellWidth = Math.floor(availableWidth / (this.scheduleDays + 1)); // +1 for time column
+    const cellHeight = Math.floor(availableHeight / (this.scheduleClasses + 1)); // +1 for header
+
+    // Ensure cells are large enough for text
+    this.scheduleCellWidth = Math.max(cellWidth, this.scheduleFontSize * 4);
+    this.scheduleCellHeight = Math.max(cellHeight, this.scheduleFontSize * 2);
+
+    // Adjust start position based on available space
+    this.scheduleStartX = padding;
+    this.scheduleStartY = padding;
+  }
+
+  drawSchedule() {
+    if (!this.scheduleData) return;
+
+    const cellWidth = this.scheduleCellWidth;
+    const cellHeight = this.scheduleCellHeight;
+    const startX = this.scheduleStartX;
+    const startY = this.scheduleStartY;
+    const font = `${this.scheduleFontSize}px ${this.scheduleFontFamily}`;
+
+    this.ctx.font = font;
+    this.ctx.fillStyle = this.scheduleColor;
+    this.ctx.strokeStyle = '#000000';
+    this.ctx.lineWidth = 1;
+
+    // Draw table grid and text
+    for (let i = 0; i < this.scheduleData.length; i++) {
+      for (let j = 0; j < this.scheduleData[i].length; j++) {
+        const x = startX + j * cellWidth;
+        const y = startY + i * cellHeight;
+
+        // Draw cell border
+        this.ctx.strokeRect(x, y, cellWidth, cellHeight);
+
+        // Draw cell text
+        const text = this.scheduleData[i][j];
+        if (text) {
+          const textX = x + cellWidth / 2 - this.ctx.measureText(text).width / 2;
+          const textY = y + cellHeight / 2 + this.scheduleFontSize / 3;
+          this.ctx.fillText(text, textX, textY);
+        }
+      }
+    }
+
+    // Draw selection indicator if enabled and a cell is selected
+    if (this.showScheduleCellIndicator && this.selectedScheduleCell) {
+      const row = this.selectedScheduleCell.row;
+      const col = this.selectedScheduleCell.col;
+      const x = startX + col * cellWidth;
+      const y = startY + row * cellHeight;
+
+      // Draw a small black dot in the top-right corner of selected cell
+      this.ctx.fillStyle = '#000000';
+      this.ctx.beginPath();
+      this.ctx.arc(x + cellWidth - 5, y + 5, 3, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+  }
+
+  updateScheduleCell(row, col, text) {
+    if (this.scheduleData && row >= 0 && col >= 0 && row <= this.scheduleClasses && col <= this.scheduleDays) {
+      this.scheduleData[row][col] = text;
+      this.redrawAll();
+      this.saveScheduleToLocalStorage(); // Save schedule to cache
+      this.saveToHistory();
+    }
+  }
+
+  getScheduleCellAt(e) {
+    if (!this.scheduleData) return null;
+
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    const cellWidth = this.scheduleCellWidth;
+    const cellHeight = this.scheduleCellHeight;
+    const startX = this.scheduleStartX;
+    const startY = this.scheduleStartY;
+
+    // Calculate which cell was clicked
+    const col = Math.floor((x - startX) / cellWidth);
+    const row = Math.floor((y - startY) / cellHeight);
+
+    // Check if click is within schedule bounds - allow all cells including header row and time column
+    if (col >= 0 && row >= 0 && col <= this.scheduleDays && row <= this.scheduleClasses) {
+      return { row, col };
+    }
+
+    return null;
+  }
+
+  confirmScheduleInput() {
+    if (this.selectedScheduleCell) {
+      const text = document.getElementById('schedule-input').value;
+      this.updateScheduleCell(this.selectedScheduleCell.row, this.selectedScheduleCell.col, text);
+      this.cancelScheduleInput();
+    }
+  }
+
+  cancelScheduleInput() {
+    this.selectedScheduleCell = null;
+    document.getElementById('schedule-input').value = '';
+    // Hide the input buttons
+    const allScheduleTools = document.querySelectorAll('.schedule-tools');
+    if (allScheduleTools.length > 1) {
+      allScheduleTools[1].style.display = 'none';
+    }
+    // Redraw to remove the selection indicator
+    if (this.scheduleData) {
+      this.redrawAll();
+    }
+  }
+
+  saveScheduleToLocalStorage() {
+    try {
+      const scheduleCache = {
+        scheduleData: this.scheduleData,
+        scheduleDays: this.scheduleDays,
+        scheduleClasses: this.scheduleClasses,
+        scheduleFontFamily: this.scheduleFontFamily,
+        scheduleFontSize: this.scheduleFontSize,
+        scheduleColor: this.scheduleColor,
+        scheduleCellWidth: this.scheduleCellWidth,
+        scheduleCellHeight: this.scheduleCellHeight,
+        scheduleStartX: this.scheduleStartX,
+        scheduleStartY: this.scheduleStartY
+      };
+      localStorage.setItem('scheduleCache', JSON.stringify(scheduleCache));
+    } catch (e) {
+      console.error('Failed to save schedule to localStorage:', e);
+    }
+  }
+
+  loadScheduleFromLocalStorage() {
+    try {
+      const savedData = localStorage.getItem('scheduleCache');
+      if (!savedData) return false;
+
+      const scheduleCache = JSON.parse(savedData);
+
+      // Restore schedule configuration
+      this.scheduleData = scheduleCache.scheduleData;
+      this.scheduleDays = scheduleCache.scheduleDays;
+      this.scheduleClasses = scheduleCache.scheduleClasses;
+      this.scheduleFontFamily = scheduleCache.scheduleFontFamily;
+      this.scheduleFontSize = scheduleCache.scheduleFontSize;
+      this.scheduleColor = scheduleCache.scheduleColor;
+
+      // Recalculate dimensions based on current canvas size for proper adaptation
+      this.calculateScheduleDimensions();
+
+      if (this.scheduleData) {
+        this.drawSchedule();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('Failed to load schedule from localStorage:', e);
+      return false;
+    }
+  }
+
+  clearScheduleCache() {
+    try {
+      localStorage.removeItem('scheduleCache');
+    } catch (e) {
+      console.error('Failed to clear schedule cache:', e);
+    }
+  }
+
   clearElements() {
     this.textElements = [];
     this.lineSegments = [];
+    this.todoItems = [];
+    this.scheduleData = null; // Clear schedule data
   }
 }

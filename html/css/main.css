@@ -287,6 +287,8 @@ canvas.text-placement-mode {
 
 .brush-tools,
 .text-tools,
+.todo-tools,
+.schedule-tools,
 .crop-tools {
     display: none;
 }
@@ -295,13 +297,17 @@ canvas.text-placement-mode {
 .canvas-container.text-mode .brush-tools,
 .canvas-container.eraser-mode .brush-tools,
 .canvas-container.text-mode .text-tools,
+.canvas-container.todo-mode .todo-tools,
+.canvas-container.schedule-mode .schedule-tools,
 .canvas-container.crop-mode .crop-tools {
     display: flex;
 }
 
 .canvas-container.crop-mode .tool-buttons,
 .canvas-container.crop-mode .brush-tools,
-.canvas-container.crop-mode .text-tools {
+.canvas-container.crop-mode .text-tools,
+.canvas-container.crop-mode .todo-tools,
+.canvas-container.crop-mode .schedule-tools {
     display: none;
 }
 

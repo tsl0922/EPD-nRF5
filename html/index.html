@@ -148,6 +148,8 @@
 						<button id="brush-mode" title="画笔" class="tool-button">✏️</button>
 						<button id="eraser-mode" title="橡皮擦" class="tool-button">🧽</button>
 						<button id="text-mode" title="添加文字" class="tool-button">T</button>
+						<button id="todo-mode" title="待办事项" class="tool-button">☐</button>
+						<button id="schedule-mode" title="课表" class="tool-button">📅</button>
 						<button id="undo-btn" title="撤销 (Ctrl+Z)" class="tool-button hide">↶</button>
 						<button id="redo-btn" title="重做 (Ctrl+Y)" class="tool-button hide">↷</button>
 					</div>
@@ -209,6 +211,99 @@
 						<button id="text-bold" title="粗体">B</button>
 						<button id="text-italic" title="斜体">I</button>
 						<button id="add-text-btn" class="primary">添加文字</button>
+					</div>
+					<div class="flex-group todo-tools">
+						<label for="todo-font-family">字体:</label>
+						<select id="todo-font-family">
+							<option value="Arial">Arial</option>
+							<option value="sans-serif">Sans-serif</option>
+							<option value="monospace">Monospace</option>
+							<option value="SimSun">宋体</option>
+							<option value="SimHei">黑体</option>
+							<option value="Microsoft Yahei">微软雅黑</option>
+							<option value="Microsoft JhengHei">微软正黑体</option>
+							<option value="KaiTi">楷体</option>
+							<option value="NSimSun">新宋体</option>
+							<option value="FangSong">仿宋</option>
+							<option value="YouYuan">幼圆</option>
+							<option value="LiSu">隶书</option>
+							<option value="STHeiti">华文黑体</option>
+							<option value="STXihei">华文细黑</option>
+							<option value="STKaiti">华文楷体</option>
+							<option value="STSong">华文宋体</option>
+							<option value="STFangsong">华文仿宋</option>
+							<option value="STZhongsong">华文中宋</option>
+							<option value="STHupo">华文琥珀</option>
+							<option value="STXinwei">华文新魏</option>
+							<option value="STLiti">华文隶书</option>
+							<option value="STXingkai">华文行楷</option>
+							<option value="FZShuTi">方正舒体</option>
+							<option value="FZYaoti">方正姚体</option>
+							<option value="PingFang SC">苹方</option>
+							<option value="Source Han Sans CN">思源黑体</option>
+							<option value="Source Han Serif SC">思源宋体</option>
+							<option value="WenQuanYi Micro Hei">文泉驿微米黑</option>
+						</select>
+						<label for="todo-font-size">大小:</label>
+						<input type="number" id="todo-font-size" value="14" min="1" max="100" style="width:80px">
+					</div>
+					<div class="flex-group todo-tools">
+						<input type="text" id="todo-input" placeholder="输入待办项" style="width:150px">
+						<label for="todo-color">颜色:</label>
+						<select id="todo-color">
+							<option value="#000000">黑色</option>
+							<option value="#FF0000">红色</option>
+							<option value="#FFFF00">黄色</option>
+							<option value="#00FF00">绿色</option>
+							<option value="#0000FF">蓝色</option>
+							<option value="#FFFFFF">白色</option>
+						</select>
+						<button id="todo-bold" title="粗体">B</button>
+						<button id="todo-italic" title="斜体">I</button>
+						<button id="toggle-todo-delete-btn" title="切换删除按钮显示" class="primary">✕</button>
+						<button id="add-todo-btn" class="primary">添加待办项</button>
+					</div>
+					<div class="flex-group schedule-tools">
+						<label for="schedule-days">天数:</label>
+						<input type="number" id="schedule-days" value="5" min="1" max="7" style="width:60px">
+						<label for="schedule-classes">课程数:</label>
+						<input type="number" id="schedule-classes" value="6" min="1" max="12" style="width:60px">
+						<label for="schedule-font-family">字体:</label>
+						<select id="schedule-font-family" style="width:120px">
+							<option value="Arial">Arial</option>
+							<option value="sans-serif">Sans-serif</option>
+							<option value="monospace">Monospace</option>
+							<option value="SimSun">宋体</option>
+							<option value="SimHei" selected>黑体</option>
+							<option value="Microsoft Yahei">微软雅黑</option>
+							<option value="KaiTi">楷体</option>
+						</select>
+						<label for="schedule-font-size">大小:</label>
+						<input type="number" id="schedule-font-size" value="12" min="8" max="32" style="width:60px">
+						<button id="schedule-font-increase-btn" title="增大字体">A+</button>
+						<button id="schedule-font-decrease-btn" title="减小字体">A-</button>
+						<label for="schedule-color">颜色:</label>
+						<select id="schedule-color">
+							<option value="#000000">黑色</option>
+							<option value="#FF0000">红色</option>
+							<option value="#0000FF">蓝色</option>
+						</select>
+						<button id="toggle-schedule-cell-indicator-btn" title="切换单元格选中提示" class="primary">▭</button>
+						<button id="create-schedule-btn" class="primary">生成课表</button>
+					</div>
+					<div class="flex-group schedule-tools">
+						<label>位置/缩放:</label>
+						<button id="schedule-move-up-btn" title="上移">⇧</button>
+						<button id="schedule-move-down-btn" title="下移">⇩</button>
+						<button id="schedule-move-left-btn" title="左移">⇦</button>
+						<button id="schedule-move-right-btn" title="右移">⇨</button>
+						<button id="schedule-zoom-in-btn" title="放大">+</button>
+						<button id="schedule-zoom-out-btn" title="缩小">-</button>
+					</div>
+					<div class="flex-group schedule-tools">
+						<input type="text" id="schedule-input" placeholder="输入课程" style="width:150px">
+						<button id="schedule-input-confirm-btn" class="primary">确定</button>
+						<button id="schedule-input-cancel-btn" class="secondary">取消</button>
 					</div>
 					<div class="flex-group crop-tools">
 						<button id="crop-zoom-in" title="放大" class="secondary">+</button>

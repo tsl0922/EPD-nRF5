@@ -542,6 +542,8 @@ function clearCanvas() {
   if (confirm('清除画布内容?')) {
     fillCanvas('white');
     paintManager.clearElements(); // Clear stored text positions and line segments
+    paintManager.clearCanvasCache(); // Clear cached data from localStorage
+    paintManager.clearScheduleCache(); // Clear schedule cache
     if (cropManager.isCropMode()) cropManager.exitCropMode();
     paintManager.saveToHistory(); // Save cleared canvas to history
     return true;
@@ -552,6 +554,7 @@ function clearCanvas() {
 function convertDithering() {
   paintManager.redrawTextElements();
   paintManager.redrawLineSegments();
+  paintManager.redrawTodoItems();
 
   const contrast = parseFloat(document.getElementById('ditherContrast').value);
   const currentImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
