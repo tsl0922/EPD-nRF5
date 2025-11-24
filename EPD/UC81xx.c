@@ -65,21 +65,6 @@ void JD79668_Refresh(epd_model_t* epd) {
     NRF_LOG_DEBUG("[EPD]: refresh end\n");
 }
 
-void JD79665_Refresh(epd_model_t* epd) {
-    NRF_LOG_DEBUG("[EPD]: refresh begin\n");
-
-    EPD_Write(0x83,
-              0x00, 0x00, 0x00, 0x00,
-              epd->width / 256, epd->width % 256, epd->height / 256, epd->height % 256,
-              0x00); // 0x00 to disable partial mode and ensure full refresh
-
-    EPD_Write(UC81xx_DRF, 0x00);
-    delay(100);
-    UC81xx_WaitBusy(30000);
-
-    NRF_LOG_DEBUG("[EPD]: refresh end\n");
-}
-
 void UC81xx_Dump_OTP(void) {
     uint8_t data[128];
 
@@ -208,7 +193,7 @@ void JD79665_Clear(epd_model_t* epd, bool refresh) {
         }
     }
 
-    if (refresh) JD79665_Refresh(epd);
+    if (refresh) JD79668_Refresh(epd);
 }
 
 void UC81xx_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint16_t x, uint16_t y, uint16_t w,
@@ -390,7 +375,7 @@ static epd_driver_t epd_drv_jd79665 = {
     .clear = JD79665_Clear,
     .write_image = JD79668_Write_Image,
     .write_ram = UC81xx_Write_Ram_Native,
-    .refresh = JD79665_Refresh,
+    .refresh = JD79668_Refresh,
     .sleep = JD79665_Sleep,
     .read_temp = UC81xx_Read_Temp,
 };
