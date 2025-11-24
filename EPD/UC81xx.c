@@ -280,9 +280,9 @@ void JD79668_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint1
         divider = 8;
         rows = h * 2;
     }
-        wb = (w + divider - 1) / divider;  // width bytes, bitmaps are padded
-        x -= x % divider;                  // byte boundary
-        w = wb * divider;                  // byte boundary
+    wb = (w + divider - 1) / divider;  // width bytes, bitmaps are padded
+    x -= x % divider;                  // byte boundary
+    w = wb * divider;                  // byte boundary
     if (x + w > epd->width || y + h > epd->height) return;
 
     _setPartialRamArea(epd, x, y, w, h);
