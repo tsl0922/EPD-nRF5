@@ -333,13 +333,6 @@ void UC81xx_Write_Ram(epd_model_t* epd, uint8_t cfg, uint8_t* data, uint8_t len)
 // Write native data to ram, format should be 2pp or above
 void UC81xx_Write_Ram_Native(epd_model_t* epd, uint8_t cfg, uint8_t* data, uint8_t len) {
     bool begin = (cfg >> 4) == 0x00;
-    bool black = (cfg & 0x0F) == 0x0F;
-    if (begin && black) EPD_WriteCmd(UC81xx_DTM1);
-    EPD_WriteData(data, len);
-}
-
-void JD79665_Write_Ram(epd_model_t* epd, uint8_t cfg, uint8_t* data, uint8_t len) {
-    bool begin = (cfg >> 4) == 0x00;
     if (begin) EPD_WriteCmd(UC81xx_DTM1);
     EPD_WriteData(data, len);
 }
@@ -406,7 +399,7 @@ static epd_driver_t epd_drv_jd79665 = {
     .init = JD79665_Init,
     .clear = JD79665_Clear,
     .write_image = JD79665_Write_Image,
-    .write_ram = JD79665_Write_Ram,
+    .write_ram = UC81xx_Write_Ram_Native,
     .refresh = JD79665_Refresh,
     .sleep = JD79665_Sleep,
     .read_temp = UC81xx_Read_Temp,
