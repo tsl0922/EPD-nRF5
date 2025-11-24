@@ -287,34 +287,24 @@ void UC8159_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint16
 
 void JD79668_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint16_t x, uint16_t y, uint16_t w,
                          uint16_t h) {
-    uint16_t wb = (w + 7) / 8;  // width bytes, bitmaps are padded
-    x -= x % 8;                 // byte boundary
-    w = wb * 8;                 // byte boundary
-    if (x + w > epd->width || y + h > epd->height) return;
-
-    _setPartialRamArea(epd, x, y, w, h);
-    EPD_WriteCmd(UC81xx_DTM1);
-    for (uint16_t i = 0; i < h * 2; i++)  // 2 bits per pixel
-    {
-        for (uint16_t j = 0; j < w / 8; j++) EPD_WriteByte(black ? black[j + i * wb] : 0x55);
+    uint16_t divider, wb, rows;
+    if (epd->drv->ic == EPD_DRIVER_IC_JD79665) {
+        divider = 4;
+        rows = h;
+    } else {
+        divider = 8;
+        rows = h * 2;
     }
-}
-
-void JD79665_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint16_t x, uint16_t y, uint16_t w,
-                           uint16_t h) {
-    uint16_t wb = (w + 3) / 4;  // width bytes, bitmaps are padded
-    x -= x % 4;                 // byte boundary
-    w = wb * 4;                 // byte boundary
+        wb = (w + divider - 1) / divider;  // width bytes, bitmaps are padded
+        x -= x % divider;                  // byte boundary
+        w = wb * divider;                  // byte boundary
     if (x + w > epd->width || y + h > epd->height) return;
 
     _setPartialRamArea(epd, x, y, w, h);
     EPD_WriteCmd(UC81xx_DTM1);
-    for (uint16_t i = 0; i < h; i++) {
-        for (uint16_t j = 0; j < wb; j++) {
-            // black buffer contains the packed 2bpp data
-            // If black is NULL, write 0x55 (White: 01 01 01 01)
-            EPD_WriteByte(black ? black[j + i * wb] : 0x55);
-        }
+    for (uint16_t i = 0; i < rows; i++)  // 2 bits per pixel
+    {
+        for (uint16_t j = 0; j < wb; j++) EPD_WriteByte(black ? black[j + i * wb] : 0x55);
     }
 }
 
@@ -398,7 +388,7 @@ static epd_driver_t epd_drv_jd79665 = {
     .ic = EPD_DRIVER_IC_JD79665,
     .init = JD79665_Init,
     .clear = JD79665_Clear,
-    .write_image = JD79665_Write_Image,
+    .write_image = JD79668_Write_Image,
     .write_ram = UC81xx_Write_Ram_Native,
     .refresh = JD79665_Refresh,
     .sleep = JD79665_Sleep,
