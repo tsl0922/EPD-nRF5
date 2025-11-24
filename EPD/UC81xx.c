@@ -143,13 +143,14 @@ void JD79665_Init(epd_model_t* epd) {
     EPD_Reset(HIGH, 50);
     UC81xx_WaitBusy(1000);
 
+    EPD_Write(0x4D, 0x78);
     EPD_Write(UC81xx_PSR, 0x2F, 0x29);
-    EPD_Write(UC81xx_PWS, 0x88);
-    // EPD_Write(UC81xx_BTST, 0x0D, 0x12, 0x24, 0x25, 0x12, 0x29, 0x10);
+    EPD_Write(UC81xx_BTST, 0x0F, 0x8B, 0x93, 0xA1);
+    EPD_Write(UC81xx_TSE, 0x00);
     EPD_Write(UC81xx_CDI, 0x37);
-    // EPD_Write(UC81xx_TCON, 0x02, 0x02);
+    EPD_Write(UC81xx_TCON, 0x02, 0x02);
     EPD_Write(UC81xx_TRES, epd->width / 256, epd->width % 256, epd->height / 256, epd->height % 256);
-    // EPD_Write(0x62, 0x98, 0x98, 0x98, 0x75, 0xCA, 0xB2, 0x98, 0x7E);
+    EPD_Write(0x62, 0x98, 0x98, 0x98, 0x75, 0xCA, 0xB2, 0x98, 0x7E);
 
     if (epd->id == EPD_JD79665_750_BWRY) {
         EPD_Write(UC81xx_GSST, 0x00, 0x00, 0x00, 0x00);
@@ -157,7 +158,8 @@ void JD79665_Init(epd_model_t* epd) {
         EPD_Write(UC81xx_GSST, 0x00, 0x10, 0x00, 0x00);
     }
 
-    // EPD_Write(0xE7, 0x1C);
+    EPD_Write(0xE7, 0x1C);
+    EPD_Write(UC81xx_PWS, 0x00);
     EPD_Write(0xE9, 0x01);
     EPD_Write(UC81xx_PLL, 0x08);
 
