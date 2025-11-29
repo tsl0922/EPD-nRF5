@@ -1,23 +1,35 @@
 :root {
-    --primary-color: #0d6efd;
-    --primary-hover: #0b5ed7;
-    --secondary-color: #6c757d;
-    --secondary-hover: #5c636a;
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary-color: #64748b;
+    --secondary-hover: #475569;
+    --text-color: #1e293b;
+    --bg-color: #ffffff;
+    --border-color: #e2e8f0;
+    --section-bg: #f8fafc;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 
-    --dark-bg: #121212;
-    --dark-text: #e0e0e0;
-    --dark-fieldset-bg: #1e1e1e;
-    --dark-border: #333;
-    --dark-code-bg: #2d2d2d;
-    --dark-log-bg: #2a2a2a;
-    --dark-input-bg: #2d2d2d;
-    --dark-input-text: #e0e0e0;
+    --dark-bg: #0f172a;
+    --dark-text: #f1f5f9;
+    --dark-section-bg: #1e293b;
+    --dark-border: #334155;
+    --dark-code-bg: #334155;
+    --dark-log-bg: #1e293b;
+    --dark-input-bg: #334155;
+    --dark-input-text: #f1f5f9;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 body {
     margin: 0;
     padding: 0;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
 }
 
 button {
@@ -57,24 +69,28 @@ button.secondary:hover {
     background-color: var(--secondary-hover);
 }
 
-h3 {
-    padding-bottom: .3em;
-    border-bottom: 1px solid #ccc;
+h1 {
+    font-size: 2rem;
+    font-weight: 600;
     text-align: center;
+    margin: 2rem 0;
+    color: var(--text-color);
 }
 
-fieldset {
-    border: none;
-    box-shadow: 0 .5rem 0.5rem rgba(0, 0, 0, 0.2);
-    background-color: #f8f9fa;
-    padding: 10px;
-    margin-bottom: 16px;
-    border-radius: 4px;
+h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    color: var(--text-color);
 }
 
-fieldset legend {
-    font-weight: bold;
-    color: rgba(0, 0, 255, 0.6);
+.section {
+    background-color: var(--section-bg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
 }
 
 code {
@@ -88,15 +104,16 @@ code {
 input[type=text],
 input[type=number],
 select {
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 400;
     line-height: 1.5;
-    color: #212529;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    padding: .2rem .75rem;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
     max-width: 100%;
-    box-sizing: border-box;
+    background-color: var(--bg-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 input[type=file] {
@@ -122,8 +139,8 @@ select {
 
 input:focus,
 select:focus {
-    border: 1px solid #86b7fe;
-    box-shadow: 0 0 4px rgba(0, 120, 215, 0.8);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     outline: 0;
 }
 
@@ -143,14 +160,13 @@ label {
 
 .main {
     width: 100%;
-    max-width: 950px;
+    max-width: 1000px;
     margin: 0 auto;
-    padding: 0 1rem;
-    background: #fff;
-    font-size: 1rem;
+    padding: 0 1.5rem;
+    background: var(--bg-color);
+    font-size: 0.9375rem;
     font-weight: 400;
-    line-height: 1.5;
-    box-sizing: border-box;
+    line-height: 1.6;
 }
 
 .footer {
@@ -217,12 +233,14 @@ label {
     min-height: 100px;
     max-height: 300px;
     margin: 0;
-    padding: 5px;
-    background: #ddd;
+    padding: 0.75rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
     overflow-y: auto;
     overflow-x: hidden;
     font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
-    box-sizing: border-box;
+    font-size: 0.875rem;
     word-break: break-word;
 }
 
@@ -397,13 +415,13 @@ body.dark-mode .main {
     color: var(--dark-text);
 }
 
-body.dark-mode fieldset {
-    background-color: var(--dark-fieldset-bg);
-    box-shadow: 0 .5rem 0.5rem rgba(0, 0, 0, 0.5);
+body.dark-mode .section {
+    background-color: var(--dark-section-bg);
+    border-color: var(--dark-border);
 }
 
-body.dark-mode h3 {
-    border-bottom: 1px solid var(--dark-border);
+body.dark-mode h1,
+body.dark-mode h2 {
     color: var(--dark-text);
 }
 
@@ -458,9 +476,6 @@ body.dark-mode .log-container .action {
     color: #03a9f4;
 }
 
-body.dark-mode fieldset legend {
-    color: #64b5f6;
-}
 
 body.dark-mode .footer .links a:not(:last-child)::after {
     color: #666;
