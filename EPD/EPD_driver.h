@@ -140,6 +140,8 @@ typedef enum {
     EPD_SSD1677_750_HD_BW = 10,
     EPD_SSD1677_750_HD_BWR = 11,
     EPD_JD79668_750_BWRY = 12,
+    EPD_SSD1619_213_BWR = 13,
+    EPD_SSD1619_213_BW = 14,
 } epd_model_id_t;
 
 struct epd_driver;

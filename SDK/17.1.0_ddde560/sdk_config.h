@@ -6758,7 +6758,7 @@
  
 
 #ifndef RETARGET_ENABLED
-#define RETARGET_ENABLED 0
+#define RETARGET_ENABLED 1
 #endif
 
 // <q> SLIP_ENABLED  - slip - SLIP encoding and decoding

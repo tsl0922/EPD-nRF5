@@ -225,6 +225,9 @@ void EPD_LED_ON(void) {
 
 void EPD_LED_OFF(void) {
     if (EPD_LED_PIN != 0xFF) digitalWrite(EPD_LED_PIN, HIGH);
+    digitalWrite(16, HIGH);
+    digitalWrite(17, HIGH);
+    digitalWrite(18, HIGH);
 }
 
 void EPD_LED_Toggle(void) {
@@ -300,11 +303,14 @@ extern epd_model_t epd_ssd1677_750_bwr;
 extern epd_model_t epd_ssd1677_750_bw;
 extern epd_model_t epd_jd79668_420_bwry;
 extern epd_model_t epd_jd79668_750_bwry;
+extern epd_model_t epd_ssd1619_213_bwr;
+extern epd_model_t epd_ssd1619_213_bw;
 
 static epd_model_t* epd_models[] = {
     &epd_uc8176_420_bw,   &epd_uc8176_420_bwr, &epd_uc8159_750_bw,    &epd_uc8159_750_bwr,
     &epd_uc8179_750_bw,   &epd_uc8179_750_bwr, &epd_ssd1619_420_bwr,  &epd_ssd1619_420_bw,
     &epd_ssd1677_750_bwr, &epd_ssd1677_750_bw, &epd_jd79668_420_bwry, &epd_jd79668_750_bwry,
+    &epd_ssd1619_213_bwr, &epd_ssd1619_213_bw,
 };
 
 epd_model_t* epd_init(epd_model_id_t id) {
