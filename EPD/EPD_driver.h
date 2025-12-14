@@ -144,6 +144,8 @@ typedef enum {
     EPD_SSD1619_213_BW = 14,
 } epd_model_id_t;
 
+#define ALI213_OFFSET_X 8     //2020屏
+
 struct epd_driver;
 
 typedef struct {

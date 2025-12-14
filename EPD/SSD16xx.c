@@ -49,7 +49,7 @@ void SSD16xx_Init(epd_model_t* epd) {
     EPD_Write(SSD16xx_BORDER_CTRL, 0x01);
     EPD_Write(SSD16xx_TSENSOR_CTRL, 0x80);
 
-    _setPartialRamArea(epd, 0, 0, epd->width, epd->height);
+    _setPartialRamArea(epd, 0+ALI213_OFFSET_X, 0, epd->width, epd->height);
 }
 
 static void SSD16xx_Refresh(epd_model_t* epd) {
@@ -70,7 +70,7 @@ static void SSD16xx_Refresh(epd_model_t* epd) {
 void SSD16xx_Clear(epd_model_t* epd, bool refresh) {
     uint32_t ram_bytes = ((epd->width + 7) / 8) * epd->height;
 
-    _setPartialRamArea(epd, 0, 0, epd->width, epd->height);
+    _setPartialRamArea(epd, 0+ALI213_OFFSET_X, 0, epd->width, epd->height);
 
     EPD_FillRAM(SSD16xx_WRITE_RAM1, 0xFF, ram_bytes);
     EPD_FillRAM(SSD16xx_WRITE_RAM2, 0xFF, ram_bytes);
@@ -85,7 +85,7 @@ void SSD16xx_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint1
     w = wb * 8;                 // byte boundary
     if (x + w > epd->width || y + h > epd->height) return;
 
-    _setPartialRamArea(epd, x, y, w, h);
+    _setPartialRamArea(epd, x+ALI213_OFFSET_X, y, w, h);
     EPD_WriteCmd(SSD16xx_WRITE_RAM1);
     for (uint16_t i = 0; i < h; i++) {
         for (uint16_t j = 0; j < w / 8; j++) EPD_WriteByte(black ? black[j + i * wb] : 0xFF);
