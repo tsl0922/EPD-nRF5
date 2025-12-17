@@ -3,18 +3,16 @@
 
 static void UC81xx_WaitBusy(uint16_t timeout) { EPD_WaitBusy(LOW, timeout); }
 
-static void UC81xx_PowerOn(void) {
+static void UC81xx_PowerOn(epd_model_t* epd) {
     EPD_WriteCmd(UC81xx_PON);
     UC81xx_WaitBusy(200);
 }
 
-static void UC81xx_PowerOff(void) {
-    EPD_WriteCmd(UC81xx_POF);
-    UC81xx_WaitBusy(200);
-}
-
-static void JD79665_PowerOff(void) {
-    EPD_Write(UC81xx_POF, 0x00);
+static void UC81xx_PowerOff(epd_model_t* epd) {
+    if (epd->drv->ic == EPD_DRIVER_IC_JD79665)
+        EPD_Write(UC81xx_POF, 0x00);
+    else
+        EPD_WriteCmd(UC81xx_POF);
     UC81xx_WaitBusy(200);
 }
 
@@ -29,7 +27,7 @@ static void _setPartialRamArea(epd_model_t* epd, uint16_t x, uint16_t y, uint16_
     if (epd->drv->ic == EPD_DRIVER_IC_JD79668 || epd->drv->ic == EPD_DRIVER_IC_JD79665) {
         EPD_Write(0x83,  // partial window
                   x / 256, x % 256, (x + w - 1) / 256, (x + w - 1) % 256, y / 256, y % 256, (y + h - 1) / 256,
-                  (y + h - 1) % 256, 0x01);
+                  (y + h - 1) % 256, 0x00);
     } else {
         uint16_t xe = (x + w - 1) | 0x0007;  // byte boundary inclusive (last byte)
         uint16_t ye = y + h - 1;
@@ -41,7 +39,7 @@ static void _setPartialRamArea(epd_model_t* epd, uint16_t x, uint16_t y, uint16_
 
 void UC81xx_Refresh(epd_model_t* epd) {
     NRF_LOG_DEBUG("[EPD]: refresh begin\n");
-    UC81xx_PowerOn();
+    if (epd->drv->ic != EPD_DRIVER_IC_JD79668 && epd->drv->ic != EPD_DRIVER_IC_JD79665) UC81xx_PowerOn(epd);
 
     _setPartialRamArea(epd, 0, 0, epd->width, epd->height);
 
@@ -49,26 +47,14 @@ void UC81xx_Refresh(epd_model_t* epd) {
     delay(100);
     UC81xx_WaitBusy(30000);
 
-    UC81xx_PowerOff();
+    if (epd->drv->ic != EPD_DRIVER_IC_JD79668 && epd->drv->ic != EPD_DRIVER_IC_JD79665) UC81xx_PowerOff(epd);
     NRF_LOG_DEBUG("[EPD]: refresh end\n");
 }
 
-void JD79668_Refresh(epd_model_t* epd) {
-    NRF_LOG_DEBUG("[EPD]: refresh begin\n");
-
-    _setPartialRamArea(epd, 0, 0, epd->width, epd->height);
-
-    EPD_Write(UC81xx_DRF, 0x00);
-    delay(100);
-    UC81xx_WaitBusy(30000);
-
-    NRF_LOG_DEBUG("[EPD]: refresh end\n");
-}
-
-void UC81xx_Dump_OTP(void) {
+void UC81xx_Dump_OTP(epd_model_t* epd) {
     uint8_t data[128];
 
-    UC81xx_PowerOn();
+    UC81xx_PowerOn(epd);
     EPD_Write(UC81xx_ROTP, 0x00);
 
     NRF_LOG_DEBUG("=== OTP BEGIN ===\n");
@@ -78,13 +64,13 @@ void UC81xx_Dump_OTP(void) {
     }
     NRF_LOG_DEBUG("=== OTP END ===\n");
 
-    UC81xx_PowerOff();
+    UC81xx_PowerOff(epd);
 }
 
 void UC81xx_Init(epd_model_t* epd) {
     EPD_Reset(HIGH, 10);
 
-    //    UC81xx_Dump_OTP();
+    //    UC81xx_Dump_OTP(epd);
 
     EPD_Write(UC81xx_PSR, epd->color == BWR ? 0x0F : 0x1F);
     EPD_Write(UC81xx_CDI, epd->color == BWR ? 0x77 : 0x97);
@@ -121,7 +107,7 @@ void JD79668_Init(epd_model_t* epd) {
     EPD_Write(0xBE, 0xFE);
     EPD_Write(0xE9, 0x01);
 
-    UC81xx_PowerOn();
+    UC81xx_PowerOn(epd);
 }
 
 void JD79665_Init(epd_model_t* epd) {
@@ -148,7 +134,7 @@ void JD79665_Init(epd_model_t* epd) {
     EPD_Write(0xE9, 0x01);
     EPD_Write(UC81xx_PLL, 0x08);
 
-    UC81xx_PowerOn();
+    UC81xx_PowerOn(epd);
 }
 
 void UC81xx_Clear(epd_model_t* epd, bool refresh) {
@@ -181,19 +167,6 @@ void JD79668_Clear(epd_model_t* epd, bool refresh) {
     EPD_FillRAM(UC81xx_DTM1, 0x55, ram_bytes);
 
     if (refresh) UC81xx_Refresh(epd);
-}
-
-void JD79665_Clear(epd_model_t* epd, bool refresh) {
-    uint16_t wb = (epd->width + 3) / 4;
-
-    EPD_WriteCmd(UC81xx_DTM1);
-    for (uint16_t i = 0; i < epd->height; i++) {
-        for (uint16_t j = 0; j < wb; j++) {
-            EPD_WriteByte(0x55);
-        }
-    }
-
-    if (refresh) JD79668_Refresh(epd);
 }
 
 void UC81xx_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint16_t x, uint16_t y, uint16_t w,
@@ -272,24 +245,19 @@ void UC8159_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint16
 
 void JD79668_Write_Image(epd_model_t* epd, uint8_t* black, uint8_t* color, uint16_t x, uint16_t y, uint16_t w,
                          uint16_t h) {
-    uint16_t divider, wb, rows;
-    if (epd->drv->ic == EPD_DRIVER_IC_JD79665) {
-        divider = 4;
-        rows = h;
-    } else {
-        divider = 8;
-        rows = h * 2;
-    }
-    wb = (w + divider - 1) / divider;  // width bytes, bitmaps are padded
-    x -= x % divider;                  // byte boundary
-    w = wb * divider;                  // byte boundary
+    uint16_t wb = (w + 3) / 4;  // width bytes, bitmaps are padded
+    x -= x % 4;                 // byte boundary
+    w = wb * 4;                 // byte boundary
     if (x + w > epd->width || y + h > epd->height) return;
 
     _setPartialRamArea(epd, x, y, w, h);
     EPD_WriteCmd(UC81xx_DTM1);
-    for (uint16_t i = 0; i < rows; i++)  // 2 bits per pixel
-    {
-        for (uint16_t j = 0; j < wb; j++) EPD_WriteByte(black ? black[j + i * wb] : 0x55);
+    for (uint16_t i = 0; i < h; i++) {
+        for (uint16_t j = 0; j < wb; j++) {
+            // black buffer contains the packed 2bpp data
+            // If black is NULL, write 0x55 (White: 01 01 01 01)
+            EPD_WriteByte(black ? black[j + i * wb] : 0x55);
+        }
     }
 }
 
@@ -313,13 +281,7 @@ void UC81xx_Write_Ram_Native(epd_model_t* epd, uint8_t cfg, uint8_t* data, uint8
 }
 
 void UC81xx_Sleep(epd_model_t* epd) {
-    UC81xx_PowerOff();
-    delay(100);
-    EPD_Write(UC81xx_DSLP, 0xA5);
-}
-
-void JD79665_Sleep(epd_model_t* epd) {
-    JD79665_PowerOff();
+    UC81xx_PowerOff(epd);
     delay(100);
     EPD_Write(UC81xx_DSLP, 0xA5);
 }
@@ -364,7 +326,7 @@ static epd_driver_t epd_drv_jd79668 = {
     .clear = JD79668_Clear,
     .write_image = JD79668_Write_Image,
     .write_ram = UC81xx_Write_Ram_Native,
-    .refresh = JD79668_Refresh,
+    .refresh = UC81xx_Refresh,
     .sleep = UC81xx_Sleep,
     .read_temp = UC81xx_Read_Temp,
 };
@@ -372,11 +334,11 @@ static epd_driver_t epd_drv_jd79668 = {
 static epd_driver_t epd_drv_jd79665 = {
     .ic = EPD_DRIVER_IC_JD79665,
     .init = JD79665_Init,
-    .clear = JD79665_Clear,
+    .clear = JD79668_Clear,
     .write_image = JD79668_Write_Image,
     .write_ram = UC81xx_Write_Ram_Native,
-    .refresh = JD79668_Refresh,
-    .sleep = JD79665_Sleep,
+    .refresh = UC81xx_Refresh,
+    .sleep = UC81xx_Sleep,
     .read_temp = UC81xx_Read_Temp,
 };
 
