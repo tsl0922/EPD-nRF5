@@ -27,7 +27,7 @@ static void _setPartialRamArea(epd_model_t* epd, uint16_t x, uint16_t y, uint16_
     if (epd->drv->ic == EPD_DRIVER_IC_JD79668 || epd->drv->ic == EPD_DRIVER_IC_JD79665) {
         EPD_Write(0x83,  // partial window
                   x / 256, x % 256, (x + w - 1) / 256, (x + w - 1) % 256, y / 256, y % 256, (y + h - 1) / 256,
-                  (y + h - 1) % 256, 0x00);
+                  (y + h - 1) % 256, 0x01);
     } else {
         uint16_t xe = (x + w - 1) | 0x0007;  // byte boundary inclusive (last byte)
         uint16_t ye = y + h - 1;
@@ -44,6 +44,9 @@ void UC81xx_Refresh(epd_model_t* epd) {
     _setPartialRamArea(epd, 0, 0, epd->width, epd->height);
 
     EPD_WriteCmd(UC81xx_DRF);
+    if (epd->drv->ic == EPD_DRIVER_IC_JD79668 || epd->drv->ic == EPD_DRIVER_IC_JD79665) {
+        EPD_WriteByte(0x00);
+    }
     delay(100);
     UC81xx_WaitBusy(30000);
 
@@ -162,9 +165,14 @@ void UC8159_Clear(epd_model_t* epd, bool refresh) {
 }
 
 void JD79668_Clear(epd_model_t* epd, bool refresh) {
-    uint32_t ram_bytes = ((epd->width + 3) / 4) * epd->height;
+    uint16_t wb = (epd->width + 3) / 4;
 
-    EPD_FillRAM(UC81xx_DTM1, 0x55, ram_bytes);
+    EPD_WriteCmd(UC81xx_DTM1);
+    for (uint16_t i = 0; i < epd->height; i++) {
+        for (uint16_t j = 0; j < wb; j++) {
+            EPD_WriteByte(0x55);
+        }
+    }
 
     if (refresh) UC81xx_Refresh(epd);
 }
