@@ -68,7 +68,7 @@ void UC81xx_Dump_OTP(epd_model_t* epd) {
 }
 
 void UC81xx_Init(epd_model_t* epd) {
-    EPD_Reset(true, 10);
+    EPD_Reset(true, 50);
     switch (epd->ic) {
         case DRV_IC_UC8159:
             EPD_Write(UC81xx_PWR, 0x37, 0x00);
