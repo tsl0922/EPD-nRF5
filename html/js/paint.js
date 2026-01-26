@@ -476,10 +476,10 @@ class PaintManager {
     if (this.currentTool === 'brush' || this.currentTool === 'eraser') {
       // Check if mouse is within canvas bounds
       const rect = this.canvas.getBoundingClientRect();
-      const isInCanvas = e.clientX >= rect.left && 
-                         e.clientX <= rect.right && 
-                         e.clientY >= rect.top && 
-                         e.clientY <= rect.bottom;
+      const isInCanvas = e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
 
       if (isInCanvas) {
         this.brushCursor.style.display = 'block';
@@ -702,20 +702,28 @@ class PaintManager {
     e.preventDefault();
     const touch = e.touches[0];
 
-    // If in text placement mode, handle as a click
-    if (this.currentTool === 'text' && this.isTextPlacementMode) {
+    // If in placement mode or schedule mode, handle as a click
+    const isPlacementMode = (this.currentTool === 'text' && this.isTextPlacementMode) ||
+      (this.currentTool === 'todo' && this.isTodoPlacementMode) ||
+      (this.currentTool === 'schedule');
+
+    if (isPlacementMode) {
       const mouseEvent = new MouseEvent('click', {
         clientX: touch.clientX,
-        clientY: touch.clientY
+        clientY: touch.clientY,
+        bubbles: true,
+        cancelable: true
       });
       this.canvas.dispatchEvent(mouseEvent);
       return;
     }
 
-    // Otherwise handle as normal drawing
+    // Otherwise handle as normal drawing/dragging
     const mouseEvent = new MouseEvent('mousedown', {
       clientX: touch.clientX,
-      clientY: touch.clientY
+      clientY: touch.clientY,
+      bubbles: true,
+      cancelable: true
     });
     this.canvas.dispatchEvent(mouseEvent);
   }
