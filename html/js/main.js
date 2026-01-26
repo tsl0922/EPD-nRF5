@@ -14,6 +14,7 @@ const EpdCmd = {
   SLEEP: 0x06,
 
   SET_TIME: 0x20,
+  SET_WEEK_START: 0x21,
 
   WRITE_IMG: 0x30, // v1.6
 
@@ -125,14 +126,27 @@ async function writeImage(data, step = 'bw') {
 }
 
 async function setDriver() {
+  if (!confirm('确认设置驱动配置？此操作将重新初始化屏幕。')) return;
   await write(EpdCmd.SET_PINS, document.getElementById("epdpins").value);
   await write(EpdCmd.INIT, document.getElementById("epddriver").value);
+  addLog("驱动配置已设置");
 }
 
 async function syncTime(mode) {
+  const modeName = mode === 1 ? '日历模式' : '时钟模式';
+  let confirmMsg = `确认切换到${modeName}？`;
   if (mode === 2) {
-    if (!confirm('提醒：时钟模式目前使用全刷实现，此功能目前多用于修复老化屏残影问题，不建议长期开启，是否继续？')) return;
+    confirmMsg += '\n\n提醒：时钟模式目前使用全刷实现，此功能目前多用于修复老化屏残影问题，不建议长期开启。';
   }
+  if (!confirm(confirmMsg)) return;
+  
+  // 获取星期第一天设置（默认周一）
+  const weekStartValue = document.getElementById('weekStart').value;
+  const weekStart = weekStartValue !== null && weekStartValue !== '' ? parseInt(weekStartValue) : 1;
+  
+  // 先设置星期第一天
+  await write(EpdCmd.SET_WEEK_START, new Uint8Array([weekStart]));
+  
   const timestamp = new Date().getTime() / 1000;
   const data = new Uint8Array([
     (timestamp >> 24) & 0xFF,
@@ -144,6 +158,7 @@ async function syncTime(mode) {
   ]);
   if (await write(EpdCmd.SET_TIME, data)) {
     addLog("时间已同步！");
+    addLog(`星期第一天已设置为：${weekStart === 1 ? '周一' : '周日'}`);
     addLog("屏幕刷新完成前请不要操作。");
   }
 }
@@ -159,8 +174,10 @@ async function clearScreen() {
 async function sendcmd() {
   const cmdTXT = document.getElementById('cmdTXT').value;
   if (cmdTXT == '') return;
+  if (!confirm('确认发送命令？此操作可能影响设备状态。')) return;
   const bytes = hex2bytes(cmdTXT);
   await write(bytes[0], bytes.length > 1 ? bytes.slice(1) : null);
+  addLog("命令已发送");
 }
 
 function convertUC8159(blackWhiteData, redWhiteData) {

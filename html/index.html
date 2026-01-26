@@ -4,16 +4,16 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>墨水屏日历</title>
+	<title>墨水屏控制台</title>
 	<link rel="shortcut icon" type="image/png" href="favicon.png">
 	<link rel="stylesheet" href="css/main.css?v=20251109">
 </head>
 
 <body>
 	<div class="main">
-		<h3>墨水屏日历</h3>
-		<fieldset>
-			<legend>蓝牙连接</legend>
+		<h1>墨水屏控制台</h1>
+		<section class="section">
+			<h2>蓝牙连接</h2>
 			<div class="flex-container">
 				<div class="flex-group">
 					<button id="connectbutton" type="button" class="primary" onclick="preConnect()">连接</button>
@@ -44,10 +44,17 @@
 				</div>
 			</div>
 			<div class="log-container" id="log"></div>
-		</fieldset>
-		<fieldset>
-			<legend>设备控制</legend>
+		</section>
+		<section class="section">
+			<h2>设备控制</h2>
 			<div class="flex-container">
+				<div class="flex-group">
+					<label for="weekStart">星期第一天:</label>
+					<select id="weekStart">
+						<option value="1" selected>周一</option>
+						<option value="0">周日</option>
+					</select>
+				</div>
 				<div class="flex-group">
 					<button id="calendarmodebutton" type="button" class="primary" onclick="syncTime(1)">日历模式</button>
 					<button id="clockmodebutton" type="button" class="primary" onclick="syncTime(2)">时钟模式</button>
@@ -58,9 +65,9 @@
 					<button id="sendcmdbutton" type="button" class="primary" onclick="sendcmd()">发送命令</button>
 				</div>
 			</div>
-		</fieldset>
-		<fieldset>
-			<legend>蓝牙传图</legend>
+		</section>
+		<section class="section">
+			<h2>蓝牙传图</h2>
 			<div class="flex-container">
 				<input type="file" id="imageFile" accept=".png,.jpg,.bmp,.webp,.jpeg" onchange="updateImage()">
 			</div>
@@ -316,7 +323,7 @@
 					</div>
 				</div>
 			</div>
-		</fieldset>
+		</section>
 		<div class="footer">
 			<span class="copy">&copy;Source from tsl0922, modfiy by DYC 2025.</span>
 			<span class="links">

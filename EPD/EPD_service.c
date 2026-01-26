@@ -173,9 +173,14 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
 
         case EPD_CMD_SET_WEEK_START:
             if (length < 2) return;
-            if (p_data[1] < 7 && p_data[1] != p_epd->config.week_start) {
+            if (p_data[1] < 7) {
                 p_epd->config.week_start = p_data[1];
                 epd_config_write(&p_epd->config);
+                // 如果当前是日历模式，立即刷新显示以应用新的星期第一天设置
+                if (p_epd->config.display_mode == MODE_CALENDAR) {
+                    extern uint32_t timestamp(void);
+                    ble_epd_on_timer(p_epd, timestamp(), true);
+                }
             }
             break;
 
@@ -346,7 +351,7 @@ uint32_t ble_epd_init(ble_epd_t* p_epd) {
         memcpy(&p_epd->config, cfg, sizeof(cfg));
 #endif
         if (p_epd->config.display_mode == 0xFF) p_epd->config.display_mode = MODE_CALENDAR;
-        if (p_epd->config.week_start == 0xFF) p_epd->config.week_start = 0;
+        if (p_epd->config.week_start == 0xFF) p_epd->config.week_start = 1;  // Default to Monday
         epd_config_write(&p_epd->config);
     }
 
