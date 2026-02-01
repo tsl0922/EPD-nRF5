@@ -17,6 +17,11 @@ const EpdCmd = {
 
   WRITE_IMG: 0x30, // v1.6
 
+  // CRC Transfer commands (v1.9+)
+  WRITE_BLOCK: 0x31,
+  QUERY_STATUS: 0x32,
+  RESET_TRANSFER: 0x33,
+
   SET_CONFIG: 0x90,
   SYS_RESET: 0x91,
   SYS_SLEEP: 0x92,
@@ -124,6 +129,25 @@ async function writeImage(data, step = 'bw') {
   }
 }
 
+// New CRC-verified image transfer with resume capability
+async function writeImageCRC(data, step = 'bw') {
+  const stepName = step === 'bw' ? '黑白' : '颜色';
+
+  try {
+    await BleTransfer.sendImageWithResume(data, step, (sent, total) => {
+      let currentTime = (new Date().getTime() - startTime) / 1000.0;
+      setStatus(`${stepName}块(CRC): ${sent}/${total}, 总用时: ${currentTime.toFixed(1)}s`);
+    });
+    return true;
+  } catch (e) {
+    console.error('CRC transfer failed:', e);
+    addLog(`CRC传输失败: ${e.message}，回退到普通传输`);
+    // Fallback to legacy transfer
+    await writeImage(data, step);
+    return true;
+  }
+}
+
 async function setDriver() {
   await write(EpdCmd.SET_PINS, document.getElementById("epdpins").value);
   await write(EpdCmd.INIT, document.getElementById("epddriver").value);
@@ -219,24 +243,32 @@ async function sendimg() {
 
   await write(EpdCmd.INIT);
 
+  // Use CRC transfer for firmware version >= 0x19
+  const useCRC = (appVersion >= 0x19) && (typeof BleTransfer !== 'undefined');
+  const transferFn = useCRC ? writeImageCRC : writeImage;
+
+  if (useCRC) {
+    addLog("使用CRC校验传输模式");
+  }
+
   if (ditherMode === 'fourColor') {
-    await writeImage(processedData, 'color');
+    await transferFn(processedData, 'color');
   } else if (ditherMode === 'threeColor') {
     const halfLength = Math.floor(processedData.length / 2);
     const blackWhiteData = processedData.slice(0, halfLength);
     const redWhiteData = processedData.slice(halfLength);
     if (epdDriverSelect.value === '08' || epdDriverSelect.value === '09') {
-      await writeImage(convertUC8159(blackWhiteData, redWhiteData), 'bw');
+      await transferFn(convertUC8159(blackWhiteData, redWhiteData), 'bw');
     } else {
-      await writeImage(blackWhiteData, 'bw');
-      await writeImage(redWhiteData, 'red');
+      await transferFn(blackWhiteData, 'bw');
+      await transferFn(redWhiteData, 'red');
     }
   } else if (ditherMode === 'blackWhiteColor') {
     if (epdDriverSelect.value === '08' || epdDriverSelect.value === '09') {
       const emptyData = new Uint8Array(processedData.length).fill(0xFF);
-      await writeImage(convertUC8159(processedData, emptyData), 'bw');
+      await transferFn(convertUC8159(processedData, emptyData), 'bw');
     } else {
-      await writeImage(processedData, 'bw');
+      await transferFn(processedData, 'bw');
     }
   } else {
     addLog("当前固件不支持此颜色模式。");
@@ -358,6 +390,15 @@ async function reConnect() {
 
 function handleNotify(value, idx) {
   const data = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+
+  // Route CRC transfer responses to BleTransfer module
+  if (data.length >= 1 && (data[0] === 0xA0 || data[0] === 0xA1)) {
+    if (typeof BleTransfer !== 'undefined') {
+      BleTransfer.handleNotification(value);
+    }
+    return;
+  }
+
   if (idx == 0) {
     addLog(`收到配置：${bytes2hex(data)}`);
     const epdpins = document.getElementById("epdpins");
