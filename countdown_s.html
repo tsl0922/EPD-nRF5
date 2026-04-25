@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>墨水屏标语倒计时 - 红黑版</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root { --ep-black: #000000; --ep-red: #ff0000; --ep-white: #ffffff; }
+        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; padding: 30px; }
+        
+        /* --- 4.2寸预览区 (400x300) --- */
+        #capture-area {
+            width: 400px; height: 300px;
+            background: var(--ep-white);
+            border: 2px solid #000;
+            display: flex; flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+            box-sizing: border-box; overflow: hidden;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* 顶部日期栏 */
+        .top-date {
+            position: absolute;
+            top: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--ep-black);
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--ep-black);
+            padding-bottom: 2px;
+        }
+
+        /* 核心标语区 - 居中特大号 */
+        .motto-section {
+            width: 90%;
+            text-align: center;
+            margin-top: 10px;
+        }
+        #editable-motto {
+            font-size: 42px; /* 进一步放大 */
+            font-weight: 900;
+            color: var(--ep-black);
+            margin: 0;
+            cursor: pointer;
+            line-height: 1.1;
+            word-wrap: break-word;
+        }
+
+        /* 分割点 */
+        .dot-divider {
+            margin: 15px 0;
+            font-size: 20px;
+            color: var(--ep-red);
+            font-weight: bold;
+        }
+
+        /* 倒计时展示区 */
+        .countdown-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .event-label {
+            font-size: 15px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .days-container {
+            display: flex;
+            align-items: baseline;
+        }
+
+        .days-num {
+            font-size: 85px; /* 巨型数字 */
+            font-family: 'Arial Black', sans-serif;
+            font-weight: 900;
+            line-height: 0.85;
+            color: var(--ep-red); /* 改为红色 */
+        }
+
+        .days-unit {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--ep-black);
+            margin-left: 6px;
+        }
+
+        /* 管理面板 */
+        .admin-panel { 
+            width: 400px; background: white; padding: 25px; 
+            border-radius: 12px; margin-top: 20px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+        }
+        .input-item { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        .input-item label { font-size: 13px; font-weight: bold; color: #666; }
+        .input-item input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+        
+        .btn-save { 
+            width: 100%; padding: 12px; border: none; border-radius: 6px; 
+            font-weight: bold; cursor: pointer; background: var(--ep-red); color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="capture-area">
+        <div class="top-date" id="live-date">2026 / 04 / 17 FRIDAY</div>
+        
+        <div class="motto-section">
+            <h1 id="editable-motto" onclick="editMotto()" title="点击修改标语">新婚快乐</h1>
+        </div>
+
+        <div class="dot-divider">✦ ✦ ✦</div>
+
+        <div class="countdown-section" id="countdown-display">
+            </div>
+    </div>
+
+    <div class="admin-panel">
+        <div class="input-item">
+            <label>目标事件描述</label>
+            <input type="text" id="event-name" placeholder="例如：距离考研/周年庆">
+        </div>
+        <div class="input-item">
+            <label>目标日期</label>
+            <input type="date" id="target-date">
+        </div>
+        
+        <button class="btn-save" onclick="saveImage()">下载 400x300 图片</button>
+        <p style="font-size:12px; color:#999; text-align:center; margin-top:12px">提示：直接点击图片中的“黑色大字”可改写标语</p>
+    </div>
+
+    <script>
+        let config = JSON.parse(localStorage.getItem('ep_red_cfg')) || {
+            motto: "保持热爱",
+            label: "距离考研",
+            date: "2026-12-21"
+        };
+
+        function init() {
+            // 填充表单默认值
+            document.getElementById('event-name').value = config.label;
+            document.getElementById('target-date').value = config.date;
+            render();
+            updateDate();
+        }
+
+        function updateDate() {
+            const n = new Date();
+            const weeks = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+            document.getElementById('live-date').innerText = `${n.getFullYear()} / ${String(n.getMonth()+1).padStart(2,'0')} / ${String(n.getDate()).padStart(2,'0')}   ${weeks[n.getDay()]}`;
+        }
+
+        function editMotto() {
+            const val = prompt("请输入顶端大标语：", config.motto);
+            if (val) {
+                config.motto = val;
+                render();
+            }
+        }
+
+        function render() {
+            const label = document.getElementById('event-name').value || "距离目标";
+            const date = document.getElementById('target-date').value || "2026-12-31";
+            
+            // 更新配置
+            config.label = label;
+            config.date = date;
+            document.getElementById('editable-motto').innerText = config.motto;
+
+            const target = new Date(date).setHours(0,0,0,0);
+            const today = new Date().setHours(0,0,0,0);
+            const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+
+            let displayNum = diff;
+            let unit = "DAYS";
+
+            if (diff === 0) { displayNum = "0"; }
+            else if (diff < 0) { displayNum = "!"; unit = "OVER"; }
+
+            document.getElementById('countdown-display').innerHTML = `
+                <div class="event-label">${label}</div>
+                <div class="days-container">
+                    <span class="days-num">${displayNum}</span>
+                    <span class="days-unit">${unit}</span>
+                </div>
+            `;
+            
+            localStorage.setItem('ep_red_cfg', JSON.stringify(config));
+        }
+
+        // 监听输入
+        document.getElementById('event-name').addEventListener('input', render);
+        document.getElementById('target-date').addEventListener('input', render);
+
+        function saveImage() {
+            html2canvas(document.getElementById('capture-area'), {
+                width: 400,
+                height: 300,
+                scale: 2
+            }).then(canvas => {
+                const a = document.createElement('a');
+                a.download = `EInk_Countdown_Red.png`;
+                a.href = canvas.toDataURL();
+                a.click();
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

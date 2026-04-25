@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>墨水屏倒计时 Pro - 动态阵列版</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root { --ep-black: #000000; --ep-red: #ff0000; --ep-white: #ffffff; }
+        body { font-family: "PingFang SC", "STHeiti", sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 20px; }
+        
+        /* --- 4.2寸预览区 (400x300) --- */
+        #capture-area {
+            width: 400px; height: 300px;
+            background: var(--ep-white);
+            border: 1px solid #000;
+            display: flex; flex-direction: column;
+            box-sizing: border-box; overflow: hidden;
+            position: relative;
+        }
+
+        .top-date {
+            position: absolute;
+            top: 8px; right: 12px;
+            font-size: 10px;
+            color: var(--ep-black);
+            font-weight: bold;
+            text-align: right;
+            line-height: 1.2;
+            z-index: 10;
+        }
+
+        .header { 
+            text-align: left; 
+            padding: 12px 0 8px 15px;
+            flex-shrink: 0; 
+        }
+        #title-text { 
+            color: var(--ep-black); 
+            border-left: 5px solid var(--ep-red); 
+            display: inline-block; 
+            padding: 0 10px; 
+            font-weight: 900;
+            margin: 0;
+            font-size: 18px;
+        }
+
+        /* --- 阵列布局容器 --- */
+        .exam-grid-preview { 
+            padding: 0 12px 12px 12px; 
+            flex-grow: 1; 
+            display: grid;
+            gap: 10px;
+            align-content: stretch;
+        }
+
+        /* --- 矩形卡片样式 --- */
+        .preview-card { 
+            border: 2px solid var(--ep-black); 
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+            background: white;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        
+        .is-important-card { 
+            border: 4px solid var(--ep-red) !important;
+        }
+        .is-important-card::after {
+            content: "★";
+            position: absolute;
+            top: 4px; right: 6px;
+            color: var(--ep-red);
+        }
+
+        .preview-name { 
+            font-weight: bold; 
+            color: var(--ep-black); 
+            margin-bottom: 5px;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .preview-days-info {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+        }
+
+        .preview-days-val { 
+            font-weight: 900; 
+            color: var(--ep-red); 
+            font-family: 'Arial Black', sans-serif; 
+            line-height: 1;
+        }
+        .preview-unit {
+            font-weight: bold;
+            color: var(--ep-black);
+            margin-left: 3px;
+        }
+
+        /* --- 管理区 --- */
+        .admin-panel { width: 520px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .input-card { display: flex; gap: 8px; margin-bottom: 15px; align-items: center; background: #f8f9fa; padding: 12px; border-radius: 8px; }
+        .input-card input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        #sortable-list { list-style: none; padding: 0; margin: 0; }
+        .manage-item { 
+            display: flex; align-items: center; gap: 12px; 
+            background: #fff; border: 1px solid #eee; margin-bottom: 8px;
+            padding: 10px; border-radius: 6px; cursor: move;
+        }
+        .drag-handle { color: #ccc; cursor: grab; font-size: 20px; user-select: none; }
+        .manage-info { flex-grow: 1; display: flex; gap: 8px; }
+        .manage-info input[type="text"] { flex: 2; }
+        .btn-del { background: #ff4d4f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        
+        .action-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-main { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-save { background: var(--ep-red); color: white; }
+        .btn-data { background: #555; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="capture-area">
+        <div class="top-date" id="live-date"></div>
+        <div class="header">
+            <h1 id="title-text">倒计时看板</h1>
+        </div>
+        <div class="exam-grid-preview" id="preview-container"></div>
+    </div>
+
+    <div class="admin-panel">
+        <h3 style="margin-top:0; border-left: 4px solid var(--ep-red); padding-left: 10px;">项目管理</h3>
+        
+        <div class="input-card">
+            <input type="text" id="name-in" placeholder="项目名称">
+            <input type="date" id="date-in">
+            <label style="font-size:13px; cursor:pointer"><input type="checkbox" id="imp-in"> 重要</label>
+            <button onclick="addItem()" style="background:#000; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer">添加</button>
+        </div>
+
+        <ul id="sortable-list"></ul>
+
+        <div class="action-btns">
+            <button class="btn-main btn-data" onclick="exportJSON()">备份</button>
+            <button class="btn-main btn-data" onclick="document.getElementById('file-in').click()">恢复</button>
+            <input type="file" id="file-in" style="display:none" onchange="importJSON(this)">
+            <button class="btn-main btn-save" onclick="downloadImage()">保存 400x300 图片</button>
+        </div>
+    </div>
+
+    <script>
+        const getTodayStr = () => new Date().toISOString().split('T')[0];
+
+        let exams = JSON.parse(localStorage.getItem('dragExamGridV2')) || [
+            { name: "期末大考", date: "2026-06-20", imp: true },
+            { name: "驾照预约", date: getTodayStr(), imp: false }
+        ];
+
+        function updateLiveDate() {
+            const now = new Date();
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            document.getElementById('live-date').innerHTML = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日<br>${weekDays[now.getDay()]}`;
+        }
+
+        Sortable.create(document.getElementById('sortable-list'), {
+            animation: 150, handle: '.drag-handle', onEnd: () => saveOrder()
+        });
+
+        function calculateDays(targetDate) {
+            const today = new Date().setHours(0,0,0,0);
+            const target = new Date(targetDate).setHours(0,0,0,0);
+            const diff = target - today;
+            return Math.ceil(diff / (1000 * 60 * 60 * 24));
+        }
+
+        function renderAll() {
+            renderPreview();
+            renderManageList();
+            updateLiveDate();
+            localStorage.setItem('dragExamGridV2', JSON.stringify(exams));
+        }
+
+        function renderPreview() {
+            const container = document.getElementById('preview-container');
+            container.innerHTML = '';
+            const count = exams.length;
+
+            // 1. 动态确定网格布局
+            let cols = 2;
+            if (count === 1) cols = 1;
+            else if (count > 4) cols = 3;
+            container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+            // 2. 根据数量动态计算字体大小 (单位 px)
+            // 逻辑：项目越少，字号越大
+            let baseNameSize, baseNumSize, starSize;
+            if (count <= 1) {
+                baseNameSize = 64; baseNumSize = 80; starSize = 36;
+            } else if (count <= 2) {
+                baseNameSize = 24; baseNumSize = 64; starSize = 20;
+            } else if (count <= 4) {
+                baseNameSize = 18; baseNumSize = 48; starSize = 16;
+            } else {
+                baseNameSize = 14; baseNumSize = 32; starSize = 14;
+            }
+
+            exams.forEach(item => {
+                const days = calculateDays(item.date);
+                let dayHTML = '';
+                
+                if (days === 0) {
+                    dayHTML = `<span class="preview-days-val" style="font-size:${baseNumSize * 0.6}px">今天</span>`;
+                } else if (days < 0) {
+                    dayHTML = `<span class="preview-days-val" style="font-size:${baseNumSize * 0.6}px; color:#666">已过</span>`;
+                } else {
+                    dayHTML = `<span class="preview-days-val" style="font-size:${baseNumSize}px">${days}</span>
+                               <span class="preview-unit" style="font-size:${baseNumSize * 0.3}px">天</span>`;
+                }
+
+                container.innerHTML += `
+                    <div class="preview-card ${item.imp ? 'is-important-card' : ''}">
+                        ${item.imp ? `<style>.is-important-card::after{font-size:${starSize}px}</style>` : ''}
+                        <div class="preview-name" style="font-size:${baseNameSize}px">${item.name}</div>
+                        <div class="preview-days-info">
+                            ${dayHTML}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderManageList() {
+            const list = document.getElementById('sortable-list');
+            list.innerHTML = '';
+            exams.forEach((item, index) => {
+                list.innerHTML += `
+                    <li class="manage-item" data-index="${index}">
+                        <span class="drag-handle">☰</span>
+                        <div class="manage-info">
+                            <input type="text" value="${item.name}" onchange="updateItem(${index}, 'name', this.value)">
+                            <input type="date" value="${item.date}" onchange="updateItem(${index}, 'date', this.value)">
+                            <label><input type="checkbox" ${item.imp?'checked':''} onchange="updateItem(${index}, 'imp', this.checked)"> 重要</label>
+                        </div>
+                        <button class="btn-del" onclick="removeItem(${index})">×</button>
+                    </li>
+                `;
+            });
+        }
+        function updateItem(index, key, value) {
+            exams[index][key] = value;
+            renderPreview();
+            localStorage.setItem('dragExamGridV2', JSON.stringify(exams));
+        }
+        function saveOrder() {
+            const newExams = [];
+            document.querySelectorAll('.manage-item').forEach(el => {
+                newExams.push(exams[el.getAttribute('data-index')]);
+            });
+            exams = newExams;
+            renderAll();
+        }
+        function addItem() {
+            const n = document.getElementById('name-in').value;
+            const d = document.getElementById('date-in').value;
+            const i = document.getElementById('imp-in').checked;
+            if(n && d) {
+                exams.push({name:n, date:d, imp:i});
+                renderAll();
+                document.getElementById('name-in').value = '';
+            }
+        }
+        function removeItem(index) {
+            exams.splice(index, 1);
+            renderAll();
+        }
+        function downloadImage() {
+            html2canvas(document.getElementById('capture-area'), { width: 400, height: 300, scale: 2 })
+            .then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Grid_Countdown.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+        function exportJSON() {
+            const blob = new Blob([JSON.stringify(exams)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = 'exams.json'; a.click();
+        }
+        function importJSON(input) {
+            const reader = new FileReader();
+            reader.onload = e => { exams = JSON.parse(e.target.result); renderAll(); };
+            reader.readAsText(input.files[0]);
+        }
+        renderAll();
+    </script>
+</body>
+</html>
