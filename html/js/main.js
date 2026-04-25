@@ -3,6 +3,7 @@ let epdService, epdCharacteristic;
 let startTime, msgIndex, appVersion;
 let canvas, ctx, textDecoder;
 let paintManager, cropManager;
+let activeCanvasPreset = null;
 
 const EpdCmd = {
   SET_PINS: 0x00,
@@ -51,6 +52,101 @@ const canvasSizes = [
   { name: '4.0E6_600_400', width: 600, height: 400 },
   { name: '7.3E6_800_480', width: 800, height: 480 },
 ];
+
+const countdownStorageKey = 'epdCountdownTemplates';
+const defaultCountdownState = {
+  mode: 'single',
+  single: {
+    motto: 'Stay Focused',
+    label: 'Target',
+    date: '2026-12-21'
+  },
+  grid: {
+    title: 'Countdown Board',
+    items: [
+      { name: 'Final Exam', date: '2026-06-20', important: true },
+      { name: 'Driving Test', date: '2026-05-01', important: false }
+    ]
+  }
+};
+let countdownState = null;
+
+function getTodayISODate() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function cloneDefaultCountdownState() {
+  return JSON.parse(JSON.stringify(defaultCountdownState));
+}
+
+function normalizeCountdownState(state) {
+  const normalized = cloneDefaultCountdownState();
+  if (!state || typeof state !== 'object') return normalized;
+
+  normalized.mode = state.mode === 'grid' ? 'grid' : 'single';
+  if (state.single && typeof state.single === 'object') {
+    normalized.single.motto = state.single.motto || normalized.single.motto;
+    normalized.single.label = state.single.label || normalized.single.label;
+    normalized.single.date = state.single.date || normalized.single.date;
+  }
+  if (state.grid && typeof state.grid === 'object') {
+    normalized.grid.title = state.grid.title || normalized.grid.title;
+    if (Array.isArray(state.grid.items) && state.grid.items.length > 0) {
+      normalized.grid.items = state.grid.items.map((item) => ({
+        name: item.name || 'Untitled',
+        date: item.date || getTodayISODate(),
+        important: !!item.important
+      }));
+    }
+  }
+
+  return normalized;
+}
+
+function loadCountdownState() {
+  try {
+    countdownState = normalizeCountdownState(JSON.parse(localStorage.getItem(countdownStorageKey)));
+  } catch (e) {
+    countdownState = cloneDefaultCountdownState();
+  }
+  if (!countdownState.single.date) countdownState.single.date = getTodayISODate();
+}
+
+function saveCountdownState() {
+  localStorage.setItem(countdownStorageKey, JSON.stringify(countdownState));
+}
+
+function getCountdownDays(targetDate) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(targetDate || getTodayISODate());
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+}
+
+function formatCountdownDate() {
+  const now = new Date();
+  const weekNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  return `${now.getFullYear()} / ${String(now.getMonth() + 1).padStart(2, '0')} / ${String(now.getDate()).padStart(2, '0')}   ${weekNames[now.getDay()]}`;
+}
+
+function fitText(ctxIn, text, maxWidth, preferredSize, minSize, fontFamily, fontWeight = 'normal') {
+  let fontSize = preferredSize;
+  while (fontSize > minSize) {
+    ctxIn.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+    if (ctxIn.measureText(text).width <= maxWidth) break;
+    fontSize -= 1;
+  }
+  return fontSize;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
 
 function hex2bytes(hex) {
   for (var bytes = [], c = 0; c < hex.length; c += 2)
@@ -490,12 +586,306 @@ function setCanvasTitle(title) {
   }
 }
 
+function syncCountdownFormToState() {
+  countdownState.mode = document.getElementById('countdown-template-mode').value;
+  countdownState.single.motto = document.getElementById('countdown-single-motto').value.trim() || 'Stay Focused';
+  countdownState.single.label = document.getElementById('countdown-single-label').value.trim() || 'Target';
+  countdownState.single.date = document.getElementById('countdown-single-date').value || getTodayISODate();
+  countdownState.grid.title = document.getElementById('countdown-grid-title').value.trim() || 'Countdown Board';
+  countdownState.grid.items = Array.from(document.querySelectorAll('.template-item')).map((item) => ({
+    name: item.querySelector('.countdown-grid-name').value.trim() || 'Untitled',
+    date: item.querySelector('.countdown-grid-date').value || getTodayISODate(),
+    important: item.querySelector('.countdown-grid-important').checked
+  }));
+  if (countdownState.grid.items.length === 0) {
+    countdownState.grid.items.push({ name: 'Untitled', date: getTodayISODate(), important: false });
+  }
+}
+
+function syncCountdownStateToForm() {
+  document.getElementById('countdown-template-mode').value = countdownState.mode;
+  document.getElementById('countdown-single-motto').value = countdownState.single.motto;
+  document.getElementById('countdown-single-label').value = countdownState.single.label;
+  document.getElementById('countdown-single-date').value = countdownState.single.date;
+  document.getElementById('countdown-grid-title').value = countdownState.grid.title;
+}
+
+function renderCountdownGridItems() {
+  const container = document.getElementById('countdown-grid-items');
+  container.innerHTML = '';
+
+  countdownState.grid.items.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'template-item';
+    row.innerHTML = `
+      <input type="text" class="countdown-grid-name" value="${escapeHtml(item.name)}">
+      <input type="date" class="countdown-grid-date" value="${escapeHtml(item.date)}">
+      <label><input type="checkbox" class="countdown-grid-important" ${item.important ? 'checked' : ''}> Important</label>
+      <button type="button" class="secondary countdown-grid-remove">Remove</button>
+    `;
+    row.querySelector('.countdown-grid-remove').addEventListener('click', () => {
+      countdownState.grid.items.splice(index, 1);
+      if (countdownState.grid.items.length === 0) {
+        countdownState.grid.items.push({ name: 'Untitled', date: getTodayISODate(), important: false });
+      }
+      renderCountdownGridItems();
+      saveCountdownState();
+    });
+    container.appendChild(row);
+  });
+}
+
+function updateCountdownModeUI() {
+  const mode = document.getElementById('countdown-template-mode').value;
+  document.getElementById('countdown-single-panel').style.display = mode === 'single' ? 'block' : 'none';
+  document.getElementById('countdown-grid-panel').style.display = mode === 'grid' ? 'block' : 'none';
+}
+
+function prepareTemplateCanvas() {
+  if (cropManager.isCropMode()) cropManager.exitCropMode();
+  fillCanvas('white');
+  paintManager.clearElements();
+  paintManager.clearHistory();
+  paintManager.setActiveTool(null, '');
+}
+
+function drawRoundedRect(ctxIn, x, y, width, height, radius, lineWidth, strokeStyle) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctxIn.beginPath();
+  ctxIn.moveTo(x + r, y);
+  ctxIn.arcTo(x + width, y, x + width, y + height, r);
+  ctxIn.arcTo(x + width, y + height, x, y + height, r);
+  ctxIn.arcTo(x, y + height, x, y, r);
+  ctxIn.arcTo(x, y, x + width, y, r);
+  ctxIn.closePath();
+  ctxIn.lineWidth = lineWidth;
+  ctxIn.strokeStyle = strokeStyle;
+  ctxIn.stroke();
+}
+
+function drawSingleCountdownTemplate() {
+  const scaleX = canvas.width / 400;
+  const scaleY = canvas.height / 300;
+  const scale = Math.min(scaleX, scaleY);
+  const motto = countdownState.single.motto || 'Stay Focused';
+  const label = countdownState.single.label || 'Target';
+  const days = getCountdownDays(countdownState.single.date);
+
+  prepareTemplateCanvas();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = Math.max(1, 2 * scale);
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.font = `bold ${Math.max(11, 11 * scale)}px Arial`;
+  ctx.fillStyle = '#000000';
+  ctx.fillText(formatCountdownDate(), canvas.width / 2, 22 * scaleY);
+
+  ctx.beginPath();
+  ctx.moveTo(canvas.width * 0.2, 32 * scaleY);
+  ctx.lineTo(canvas.width * 0.8, 32 * scaleY);
+  ctx.stroke();
+
+  const mottoSize = fitText(ctx, motto, canvas.width * 0.84, 42 * scale, 18 * scale, 'Microsoft YaHei', '900');
+  ctx.font = `900 ${mottoSize}px Microsoft YaHei`;
+  ctx.fillText(motto, canvas.width / 2, 95 * scaleY);
+
+  ctx.fillStyle = '#FF0000';
+  ctx.font = `bold ${Math.max(16, 20 * scale)}px Arial`;
+  ctx.fillText('* * *', canvas.width / 2, 142 * scaleY);
+
+  ctx.fillStyle = '#444444';
+  ctx.font = `bold ${Math.max(14, 15 * scale)}px Microsoft YaHei`;
+  ctx.fillText(label, canvas.width / 2, 182 * scaleY);
+
+  ctx.fillStyle = '#FF0000';
+  const numberText = days < 0 ? '!' : String(days);
+  const numberSize = fitText(ctx, numberText, canvas.width * 0.48, 86 * scale, 30 * scale, 'Arial Black', '900');
+  ctx.font = `900 ${numberSize}px Arial Black`;
+  ctx.fillText(numberText, canvas.width / 2 - 16 * scaleX, 240 * scaleY);
+
+  ctx.fillStyle = '#000000';
+  ctx.font = `bold ${Math.max(20, 22 * scale)}px Arial`;
+  ctx.fillText(days < 0 ? 'OVER' : 'DAYS', canvas.width / 2 + 72 * scaleX, 245 * scaleY);
+
+  paintManager.saveToHistory();
+}
+
+function drawGridCountdownTemplate() {
+  const scaleX = canvas.width / 400;
+  const scaleY = canvas.height / 300;
+  const scale = Math.min(scaleX, scaleY);
+  const items = countdownState.grid.items.slice(0, 9);
+
+  prepareTemplateCanvas();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = Math.max(1, scale);
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000000';
+  ctx.font = `900 ${Math.max(18, 18 * scale)}px Microsoft YaHei`;
+  ctx.fillText(countdownState.grid.title || 'Countdown Board', 24 * scaleX, 28 * scaleY);
+
+  ctx.fillStyle = '#FF0000';
+  ctx.fillRect(10 * scaleX, 13 * scaleY, 6 * scaleX, 28 * scaleY);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#000000';
+  ctx.font = `bold ${Math.max(10, 10 * scale)}px Arial`;
+  ctx.fillText(formatCountdownDate(), canvas.width - 12 * scaleX, 18 * scaleY);
+
+  const contentTop = 50 * scaleY;
+  const contentHeight = canvas.height - contentTop - 12 * scaleY;
+  const gap = 10 * scale;
+  let cols = 2;
+  if (items.length <= 1) cols = 1;
+  else if (items.length > 4) cols = 3;
+  const rows = Math.max(1, Math.ceil(items.length / cols));
+  const cardWidth = (canvas.width - 24 * scaleX - gap * (cols - 1)) / cols;
+  const cardHeight = (contentHeight - gap * (rows - 1)) / rows;
+
+  items.forEach((item, index) => {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    const x = 12 * scaleX + col * (cardWidth + gap);
+    const y = contentTop + row * (cardHeight + gap);
+    const days = getCountdownDays(item.date);
+
+    drawRoundedRect(ctx, x, y, cardWidth, cardHeight, 6 * scale, item.important ? Math.max(2, 4 * scale) : Math.max(1, 2 * scale), item.important ? '#FF0000' : '#000000');
+
+    if (item.important) {
+      ctx.fillStyle = '#FF0000';
+      ctx.font = `bold ${Math.max(14, 18 * scale)}px Arial`;
+      ctx.textAlign = 'right';
+      ctx.fillText('*', x + cardWidth - 8 * scaleX, y + 14 * scaleY);
+    }
+
+    const nameSize = fitText(ctx, item.name, cardWidth - 18 * scaleX, Math.min(cardHeight * 0.22, 24 * scale), Math.max(11, 12 * scale), 'Microsoft YaHei', 'bold');
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.font = `bold ${nameSize}px Microsoft YaHei`;
+    ctx.fillText(item.name, x + cardWidth / 2, y + cardHeight * 0.3);
+
+    let valueText = '';
+    let unitText = '';
+    let valueColor = '#FF0000';
+    if (days === 0) {
+      valueText = 'TODAY';
+    } else if (days < 0) {
+      valueText = 'OVER';
+      valueColor = '#666666';
+    } else {
+      valueText = String(days);
+      unitText = 'D';
+    }
+
+    const numberSize = fitText(ctx, valueText, cardWidth * (unitText ? 0.5 : 0.72), Math.min(cardHeight * 0.44, 56 * scale), Math.max(16, 18 * scale), 'Arial Black', '900');
+    ctx.fillStyle = valueColor;
+    ctx.font = `900 ${numberSize}px Arial Black`;
+    const centerY = y + cardHeight * 0.68;
+
+    if (unitText) {
+      const numberWidth = ctx.measureText(valueText).width;
+      ctx.fillText(valueText, x + cardWidth / 2 - 8 * scaleX, centerY);
+      ctx.fillStyle = '#000000';
+      ctx.font = `bold ${Math.max(10, numberSize * 0.3)}px Microsoft YaHei`;
+      ctx.textAlign = 'left';
+      ctx.fillText(unitText, x + cardWidth / 2 - 8 * scaleX + numberWidth / 2 + 4 * scaleX, centerY + 6 * scaleY);
+    } else {
+      ctx.fillText(valueText, x + cardWidth / 2, centerY);
+    }
+  });
+
+  paintManager.saveToHistory();
+}
+
+function applyCountdownTemplate() {
+  syncCountdownFormToState();
+  saveCountdownState();
+  document.getElementById('imageFile').value = '';
+  activeCanvasPreset = 'countdown';
+  if (countdownState.mode === 'grid') drawGridCountdownTemplate();
+  else drawSingleCountdownTemplate();
+}
+
+function renderCanvasSource() {
+  const imageFile = document.getElementById('imageFile');
+  if (imageFile.files.length > 0) {
+    activeCanvasPreset = null;
+    updateImage();
+    return;
+  }
+
+  if (activeCanvasPreset === 'countdown') {
+    applyCountdownTemplate();
+    return;
+  }
+
+  fillCanvas('white');
+  paintManager.clearElements();
+  paintManager.clearHistory();
+  paintManager.saveToHistory();
+}
+
+function initCountdownTemplate() {
+  loadCountdownState();
+  syncCountdownStateToForm();
+  renderCountdownGridItems();
+  updateCountdownModeUI();
+
+  document.getElementById('countdown-template-mode').addEventListener('change', () => {
+    syncCountdownFormToState();
+    saveCountdownState();
+    updateCountdownModeUI();
+  });
+  document.getElementById('countdown-single-motto').addEventListener('input', () => {
+    syncCountdownFormToState();
+    saveCountdownState();
+  });
+  document.getElementById('countdown-single-label').addEventListener('input', () => {
+    syncCountdownFormToState();
+    saveCountdownState();
+  });
+  document.getElementById('countdown-single-date').addEventListener('input', () => {
+    syncCountdownFormToState();
+    saveCountdownState();
+  });
+  document.getElementById('countdown-grid-title').addEventListener('input', () => {
+    syncCountdownFormToState();
+    saveCountdownState();
+  });
+  document.getElementById('countdown-grid-add').addEventListener('click', () => {
+    syncCountdownFormToState();
+    countdownState.grid.items.push({ name: `Item ${countdownState.grid.items.length + 1}`, date: getTodayISODate(), important: false });
+    renderCountdownGridItems();
+    saveCountdownState();
+  });
+  document.getElementById('countdown-grid-items').addEventListener('input', () => {
+    syncCountdownFormToState();
+    saveCountdownState();
+  });
+  document.getElementById('apply-countdown-template').addEventListener('click', () => {
+    applyCountdownTemplate();
+  });
+}
+
 function updateImage() {
   const imageFile = document.getElementById('imageFile');
   if (imageFile.files.length == 0) {
-    fillCanvas('white');
+    renderCanvasSource();
     return;
   }
+  activeCanvasPreset = null;
 
   const image = new Image();
   image.onload = function () {
@@ -520,7 +910,7 @@ function updateCanvasSize() {
   canvas.width = selectedSize.width;
   canvas.height = selectedSize.height;
 
-  updateImage();
+  renderCanvasSource();
 }
 
 function updateDitcherOptions() {
@@ -566,6 +956,8 @@ function rotateCanvas() {
 
 function clearCanvas() {
   if (confirm('清除画布内容?')) {
+    activeCanvasPreset = null;
+    document.getElementById('imageFile').value = '';
     fillCanvas('white');
     paintManager.clearElements(); // Clear stored text positions and line segments
     if (cropManager.isCropMode()) cropManager.exitCropMode();
@@ -644,6 +1036,7 @@ document.body.onload = () => {
 
   paintManager.initPaintTools();
   cropManager.initCropTools();
+  initCountdownTemplate();
   initEventHandlers();
   updateButtonStatus();
   checkDebugMode();

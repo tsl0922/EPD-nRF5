@@ -65,6 +65,50 @@
 			<div class="flex-container">
 				<input type="file" id="imageFile" accept=".png,.jpg,.bmp,.webp,.jpeg" onchange="updateImage()">
 			</div>
+			<div class="template-panel">
+				<div class="template-header">
+					<strong>Countdown Templates</strong>
+					<span>Generate the core features from `countdown.html` and `countdown_s.html` onto the current canvas</span>
+				</div>
+				<div class="flex-container">
+					<div class="flex-group">
+						<label for="countdown-template-mode">Mode:</label>
+						<select id="countdown-template-mode">
+							<option value="single">Single Countdown</option>
+							<option value="grid">Grid Countdown</option>
+						</select>
+						<button type="button" class="secondary" id="apply-countdown-template">Render to Canvas</button>
+					</div>
+				</div>
+				<div class="template-mode-panel" id="countdown-single-panel">
+					<div class="flex-container">
+						<div class="flex-group">
+							<label for="countdown-single-motto">Motto:</label>
+							<input type="text" id="countdown-single-motto" value="Stay Focused">
+						</div>
+						<div class="flex-group">
+							<label for="countdown-single-label">Event:</label>
+							<input type="text" id="countdown-single-label" value="Target">
+						</div>
+						<div class="flex-group">
+							<label for="countdown-single-date">Date:</label>
+							<input type="date" id="countdown-single-date">
+						</div>
+					</div>
+				</div>
+				<div class="template-mode-panel" id="countdown-grid-panel">
+					<div class="flex-container">
+						<div class="flex-group">
+							<label for="countdown-grid-title">Title:</label>
+							<input type="text" id="countdown-grid-title" value="Countdown Board">
+						</div>
+						<div class="flex-group">
+							<button type="button" class="secondary" id="countdown-grid-add">Add Item</button>
+						</div>
+					</div>
+					<div class="template-list" id="countdown-grid-items"></div>
+				</div>
+			</div>
 			<div class="flex-container options">
 				<div class="flex-group debug">
 					<label for="canvasSize">画布尺寸:</label>

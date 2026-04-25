@@ -86,6 +86,7 @@ code {
 }
 
 input[type=text],
+input[type=date],
 input[type=number],
 select {
     font-size: 1rem;
@@ -128,6 +129,7 @@ select:focus {
 }
 
 input[type=text]:disabled,
+input[type=date]:disabled,
 input[type=number]:disabled,
 select:disabled {
     opacity: 0.65;
@@ -244,6 +246,63 @@ label {
 .log-container .action {
     color: #666;
     margin-right: 0.5em;
+}
+
+.template-panel {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    background: #fff;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.template-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    margin-bottom: 10px;
+}
+
+.template-header span {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.template-mode-panel {
+    margin-top: 10px;
+}
+
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.template-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background: #f8f9fa;
+}
+
+.template-item input[type="text"] {
+    min-width: 120px;
+    flex: 1 1 160px;
+}
+
+.template-item input[type="date"] {
+    min-width: 150px;
+}
+
+.template-item label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .canvas-container canvas {
@@ -407,6 +466,7 @@ body.dark-mode code {
 }
 
 body.dark-mode input[type=text],
+body.dark-mode input[type=date],
 body.dark-mode input[type=number],
 body.dark-mode select {
     background-color: var(--dark-input-bg);
@@ -415,6 +475,7 @@ body.dark-mode select {
 }
 
 body.dark-mode input[type=text]:disabled,
+body.dark-mode input[type=date]:disabled,
 body.dark-mode input[type=number]:disabled,
 body.dark-mode select:disabled {
     background-color: #1a1a1a;
@@ -487,4 +548,14 @@ body.dark-mode .tool-button.active {
     background-color: var(--primary-color);
     color: white;
     border-color: var(--primary-hover);
+}
+
+body.dark-mode .template-panel,
+body.dark-mode .template-item {
+    background-color: var(--dark-fieldset-bg);
+    border-color: var(--dark-border);
+}
+
+body.dark-mode .template-header span {
+    color: #aaa;
 }
