@@ -60,26 +60,26 @@ const todoImportVersion = 1;
 const defaultCountdownState = {
   mode: 'single',
   single: {
-    motto: 'Stay Focused',
-    label: 'Target',
+    motto: '保持专注',
+    label: '目标日',
     date: '2026-12-21'
   },
   grid: {
-    title: 'Countdown Board',
+    title: '倒计时看板',
     items: [
-      { name: 'Final Exam', date: '2026-06-20', important: true },
-      { name: 'Driving Test', date: '2026-05-01', important: false }
+      { name: '期末考试', date: '2026-06-20', important: true },
+      { name: '驾照考试', date: '2026-05-01', important: false }
     ]
   }
 };
 let countdownState = null;
 const defaultTodoState = {
-  title: "Today's Focus",
-  note: 'One step at a time',
+  title: '今日重点',
+  note: '一次做好一件事',
   items: [
-    { text: 'Check status', done: false, important: true },
-    { text: 'Finish one key task', done: false, important: false },
-    { text: 'Review before sleep', done: true, important: false }
+    { text: '检查设备状态', done: false, important: true },
+    { text: '完成一个关键任务', done: false, important: false },
+    { text: '睡前复盘今日安排', done: true, important: false }
   ]
 };
 let todoState = null;
@@ -110,7 +110,7 @@ function normalizeCountdownState(state) {
     normalized.grid.title = state.grid.title || normalized.grid.title;
     if (Array.isArray(state.grid.items) && state.grid.items.length > 0) {
       normalized.grid.items = state.grid.items.map((item) => ({
-        name: item.name || 'Untitled',
+        name: item.name || '未命名',
         date: item.date || getTodayISODate(),
         important: !!item.important
       }));
@@ -128,7 +128,7 @@ function normalizeTodoState(state) {
   normalized.note = state.note || normalized.note;
   if (Array.isArray(state.items) && state.items.length > 0) {
     normalized.items = state.items.map((item) => ({
-      text: item && item.text ? item.text : 'Untitled Task',
+      text: item && item.text ? item.text : '未命名任务',
       done: !!(item && item.done),
       important: !!(item && item.important)
     }));
@@ -172,7 +172,7 @@ function getCountdownDays(targetDate) {
 
 function formatCountdownDate() {
   const now = new Date();
-  const weekNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const weekNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
   return `${now.getFullYear()} / ${String(now.getMonth() + 1).padStart(2, '0')} / ${String(now.getDate()).padStart(2, '0')}   ${weekNames[now.getDay()]}`;
 }
 
@@ -634,17 +634,17 @@ function setCanvasTitle(title) {
 
 function syncCountdownFormToState() {
   countdownState.mode = document.getElementById('countdown-template-mode').value;
-  countdownState.single.motto = document.getElementById('countdown-single-motto').value.trim() || 'Stay Focused';
-  countdownState.single.label = document.getElementById('countdown-single-label').value.trim() || 'Target';
+  countdownState.single.motto = document.getElementById('countdown-single-motto').value.trim() || '保持专注';
+  countdownState.single.label = document.getElementById('countdown-single-label').value.trim() || '目标日';
   countdownState.single.date = document.getElementById('countdown-single-date').value || getTodayISODate();
-  countdownState.grid.title = document.getElementById('countdown-grid-title').value.trim() || 'Countdown Board';
+  countdownState.grid.title = document.getElementById('countdown-grid-title').value.trim() || '倒计时看板';
   countdownState.grid.items = Array.from(document.querySelectorAll('#countdown-grid-items .template-item')).map((item) => ({
-    name: item.querySelector('.countdown-grid-name').value.trim() || 'Untitled',
+    name: item.querySelector('.countdown-grid-name').value.trim() || '未命名',
     date: item.querySelector('.countdown-grid-date').value || getTodayISODate(),
     important: item.querySelector('.countdown-grid-important').checked
   }));
   if (countdownState.grid.items.length === 0) {
-    countdownState.grid.items.push({ name: 'Untitled', date: getTodayISODate(), important: false });
+    countdownState.grid.items.push({ name: '未命名', date: getTodayISODate(), important: false });
   }
 }
 
@@ -675,13 +675,13 @@ function renderCountdownGridItems() {
     row.innerHTML = `
       <input type="text" class="countdown-grid-name" value="${escapeHtml(item.name)}">
       <input type="date" class="countdown-grid-date" value="${escapeHtml(item.date)}">
-      <label><input type="checkbox" class="countdown-grid-important" ${item.important ? 'checked' : ''}> Important</label>
-      <button type="button" class="secondary countdown-grid-remove">Remove</button>
+      <label><input type="checkbox" class="countdown-grid-important" ${item.important ? 'checked' : ''}> 重要</label>
+      <button type="button" class="secondary countdown-grid-remove">删除</button>
     `;
     row.querySelector('.countdown-grid-remove').addEventListener('click', () => {
       countdownState.grid.items.splice(index, 1);
       if (countdownState.grid.items.length === 0) {
-        countdownState.grid.items.push({ name: 'Untitled', date: getTodayISODate(), important: false });
+        countdownState.grid.items.push({ name: '未命名', date: getTodayISODate(), important: false });
       }
       renderCountdownGridItems();
       saveCountdownState();
@@ -703,15 +703,15 @@ function refreshCountdownTemplateUI() {
 }
 
 function syncTodoFormToState() {
-  todoState.title = document.getElementById('todo-template-title').value.trim() || "Today's Focus";
-  todoState.note = document.getElementById('todo-template-note').value.trim() || 'One step at a time';
+  todoState.title = document.getElementById('todo-template-title').value.trim() || '今日重点';
+  todoState.note = document.getElementById('todo-template-note').value.trim() || '一次做好一件事';
   todoState.items = Array.from(document.querySelectorAll('#todo-list-items .template-item')).map((item) => ({
-    text: item.querySelector('.todo-item-text').value.trim() || 'Untitled Task',
+    text: item.querySelector('.todo-item-text').value.trim() || '未命名任务',
     done: item.querySelector('.todo-item-done').checked,
     important: item.querySelector('.todo-item-important').checked
   }));
   if (todoState.items.length === 0) {
-    todoState.items.push({ text: 'Untitled Task', done: false, important: false });
+    todoState.items.push({ text: '未命名任务', done: false, important: false });
   }
 }
 
@@ -729,14 +729,14 @@ function renderTodoItems() {
     row.className = 'template-item';
     row.innerHTML = `
       <input type="text" class="todo-item-text" value="${escapeHtml(item.text)}">
-      <label><input type="checkbox" class="todo-item-done" ${item.done ? 'checked' : ''}> Done</label>
-      <label><input type="checkbox" class="todo-item-important" ${item.important ? 'checked' : ''}> Important</label>
-      <button type="button" class="secondary todo-item-remove">Remove</button>
+      <label><input type="checkbox" class="todo-item-done" ${item.done ? 'checked' : ''}> 完成</label>
+      <label><input type="checkbox" class="todo-item-important" ${item.important ? 'checked' : ''}> 重要</label>
+      <button type="button" class="secondary todo-item-remove">删除</button>
     `;
     row.querySelector('.todo-item-remove').addEventListener('click', () => {
       todoState.items.splice(index, 1);
       if (todoState.items.length === 0) {
-        todoState.items.push({ text: 'Untitled Task', done: false, important: false });
+        todoState.items.push({ text: '未命名任务', done: false, important: false });
       }
       renderTodoItems();
       saveTodoState();
@@ -763,7 +763,7 @@ function exportCountdownTemplate() {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const link = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
-  link.download = `countdown-template-${stamp}.json`;
+  link.download = `倒计时模板-${stamp}.json`;
   link.href = URL.createObjectURL(blob);
   link.click();
   URL.revokeObjectURL(link.href);
@@ -782,7 +782,7 @@ function exportTodoTemplate() {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const link = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
-  link.download = `todo-template-${stamp}.json`;
+  link.download = `待办模板-${stamp}.json`;
   link.href = URL.createObjectURL(blob);
   link.click();
   URL.revokeObjectURL(link.href);
@@ -831,6 +831,50 @@ function importTodoTemplate(file) {
   reader.readAsText(file, 'utf-8');
 }
 
+// Override localized import handlers to avoid mixed-language UI.
+function importCountdownTemplate(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const rawData = JSON.parse(reader.result);
+      const importedState = rawData && typeof rawData === 'object' && rawData.countdown ? rawData.countdown : rawData;
+      countdownState = normalizeCountdownState(importedState);
+      if (!countdownState.single.date) countdownState.single.date = getTodayISODate();
+      saveCountdownState();
+      refreshCountdownTemplateUI();
+      setActivePanelTab('countdown-template-panel');
+      addLog('倒计时模板已导入。');
+    } catch (error) {
+      console.error(error);
+      alert('导入失败，文件不是有效的倒计时模板 JSON 文件。');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function importTodoTemplate(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const rawData = JSON.parse(reader.result);
+      const importedState = rawData && typeof rawData === 'object' && rawData.todo ? rawData.todo : rawData;
+      todoState = normalizeTodoState(importedState);
+      saveTodoState();
+      refreshTodoTemplateUI();
+      setActivePanelTab('todo-template-panel');
+      addLog('待办模板已导入。');
+    } catch (error) {
+      console.error(error);
+      alert('导入失败，文件不是有效的待办模板 JSON 文件。');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
 function prepareTemplateCanvas() {
   if (cropManager.isCropMode()) cropManager.exitCropMode();
   fillCanvas('white');
@@ -857,8 +901,8 @@ function drawSingleCountdownTemplate() {
   const scaleX = canvas.width / 400;
   const scaleY = canvas.height / 300;
   const scale = Math.min(scaleX, scaleY);
-  const motto = countdownState.single.motto || 'Stay Focused';
-  const label = countdownState.single.label || 'Target';
+  const motto = countdownState.single.motto || '保持专注';
+  const label = countdownState.single.label || '目标日';
   const days = getCountdownDays(countdownState.single.date);
 
   prepareTemplateCanvas();
@@ -901,7 +945,7 @@ function drawSingleCountdownTemplate() {
 
   ctx.fillStyle = '#000000';
   ctx.font = `bold ${Math.max(20, 22 * scale)}px Arial`;
-  ctx.fillText(days < 0 ? 'OVER' : 'DAYS', canvas.width / 2 + 72 * scaleX, 245 * scaleY);
+  ctx.fillText(days < 0 ? '结束' : '天', canvas.width / 2 + 72 * scaleX, 245 * scaleY);
 
   paintManager.saveToHistory();
 }
@@ -924,7 +968,7 @@ function drawGridCountdownTemplate() {
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000000';
   ctx.font = `900 ${Math.max(18, 18 * scale)}px Microsoft YaHei`;
-  ctx.fillText(countdownState.grid.title || 'Countdown Board', 24 * scaleX, 28 * scaleY);
+  ctx.fillText(countdownState.grid.title || '倒计时看板', 24 * scaleX, 28 * scaleY);
 
   ctx.fillStyle = '#FF0000';
   ctx.fillRect(10 * scaleX, 13 * scaleY, 6 * scaleX, 28 * scaleY);
@@ -970,13 +1014,13 @@ function drawGridCountdownTemplate() {
     let unitText = '';
     let valueColor = '#FF0000';
     if (days === 0) {
-      valueText = 'TODAY';
+      valueText = '今天';
     } else if (days < 0) {
-      valueText = 'OVER';
+      valueText = '已过';
       valueColor = '#666666';
     } else {
       valueText = String(days);
-      unitText = 'D';
+      unitText = '天';
     }
 
     const numberSize = fitText(ctx, valueText, cardWidth * (unitText ? 0.5 : 0.72), Math.min(cardHeight * 0.44, 56 * scale), Math.max(16, 18 * scale), 'Arial Black', '900');
@@ -1017,7 +1061,7 @@ function drawTodoTemplate() {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.font = `900 ${Math.max(20, 22 * scale)}px Microsoft YaHei`;
-  ctx.fillText(todoState.title || "Today's Focus", 20 * scaleX, 24 * scaleY);
+  ctx.fillText(todoState.title || '今日重点', 20 * scaleX, 24 * scaleY);
 
   ctx.textAlign = 'right';
   ctx.font = `bold ${Math.max(10, 10 * scale)}px Arial`;
@@ -1026,7 +1070,7 @@ function drawTodoTemplate() {
   ctx.fillStyle = '#FF0000';
   ctx.fillRect(12 * scaleX, 36 * scaleY, canvas.width - 24 * scaleX, Math.max(2, 3 * scale));
 
-  const note = todoState.note || 'One step at a time';
+  const note = todoState.note || '一次做好一件事';
   ctx.fillStyle = '#555555';
   ctx.textAlign = 'left';
   ctx.font = `bold ${Math.max(11, 12 * scale)}px Microsoft YaHei`;
@@ -1158,7 +1202,7 @@ function initCountdownTemplate() {
   });
   document.getElementById('countdown-grid-add').addEventListener('click', () => {
     syncCountdownFormToState();
-    countdownState.grid.items.push({ name: `Item ${countdownState.grid.items.length + 1}`, date: getTodayISODate(), important: false });
+    countdownState.grid.items.push({ name: `项目 ${countdownState.grid.items.length + 1}`, date: getTodayISODate(), important: false });
     renderCountdownGridItems();
     saveCountdownState();
   });
@@ -1195,7 +1239,7 @@ function initTodoTemplate() {
   });
   document.getElementById('todo-list-add').addEventListener('click', () => {
     syncTodoFormToState();
-    todoState.items.push({ text: `Task ${todoState.items.length + 1}`, done: false, important: false });
+    todoState.items.push({ text: `任务 ${todoState.items.length + 1}`, done: false, important: false });
     renderTodoItems();
     saveTodoState();
   });

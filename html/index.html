@@ -63,9 +63,9 @@
 		<fieldset>
 			<legend>蓝牙传图</legend>
 			<div class="panel-tabs" id="image-source-tabs">
-				<button type="button" class="panel-tab active" data-tab-target="image-upload-panel">Image Upload</button>
-				<button type="button" class="panel-tab" data-tab-target="countdown-template-panel">Countdown Templates</button>
-				<button type="button" class="panel-tab" data-tab-target="todo-template-panel">Todo Tasks</button>
+				<button type="button" class="panel-tab active" data-tab-target="image-upload-panel">图片上传</button>
+				<button type="button" class="panel-tab" data-tab-target="countdown-template-panel">倒计时模板</button>
+				<button type="button" class="panel-tab" data-tab-target="todo-template-panel">待办任务</button>
 			</div>
 			<div class="panel-tab-content active" id="image-upload-panel">
 				<div class="flex-container">
@@ -75,36 +75,36 @@
 			<div class="panel-tab-content" id="countdown-template-panel">
 				<div class="template-panel">
 					<div class="template-header">
-						<strong>Countdown Templates</strong>
-						<span>Generate the core features from `countdown.html` and `countdown_s.html` onto the current canvas</span>
+						<strong>倒计时模板</strong>
+						<span>将 `countdown.html` 和 `countdown_s.html` 的核心样式渲染到当前画布</span>
 					</div>
 					<div class="flex-container">
 						<div class="flex-group">
-							<label for="countdown-template-mode">Mode:</label>
+							<label for="countdown-template-mode">模式:</label>
 							<select id="countdown-template-mode">
-								<option value="single">Single Countdown</option>
-								<option value="grid">Grid Countdown</option>
+								<option value="single">单个倒计时</option>
+								<option value="grid">网格倒计时</option>
 							</select>
-							<button type="button" class="secondary" id="apply-countdown-template">Render to Canvas</button>
+							<button type="button" class="secondary" id="apply-countdown-template">渲染到画布</button>
 						</div>
 						<div class="flex-group right">
 							<input type="file" id="countdown-import-file" accept=".json,application/json" hidden>
-							<button type="button" class="secondary" id="import-countdown-template">Import</button>
-							<button type="button" class="secondary" id="export-countdown-template">Export</button>
+							<button type="button" class="secondary" id="import-countdown-template">导入</button>
+							<button type="button" class="secondary" id="export-countdown-template">导出</button>
 						</div>
 					</div>
 					<div class="template-mode-panel" id="countdown-single-panel">
 						<div class="flex-container">
 							<div class="flex-group">
-								<label for="countdown-single-motto">Motto:</label>
-								<input type="text" id="countdown-single-motto" value="Stay Focused">
+								<label for="countdown-single-motto">标语:</label>
+								<input type="text" id="countdown-single-motto" value="保持专注">
 							</div>
 							<div class="flex-group">
-								<label for="countdown-single-label">Event:</label>
-								<input type="text" id="countdown-single-label" value="Target">
+								<label for="countdown-single-label">事件:</label>
+								<input type="text" id="countdown-single-label" value="目标日">
 							</div>
 							<div class="flex-group">
-								<label for="countdown-single-date">Date:</label>
+								<label for="countdown-single-date">日期:</label>
 								<input type="date" id="countdown-single-date">
 							</div>
 						</div>
@@ -112,11 +112,11 @@
 					<div class="template-mode-panel" id="countdown-grid-panel">
 						<div class="flex-container">
 							<div class="flex-group">
-								<label for="countdown-grid-title">Title:</label>
-								<input type="text" id="countdown-grid-title" value="Countdown Board">
+								<label for="countdown-grid-title">标题:</label>
+								<input type="text" id="countdown-grid-title" value="倒计时看板">
 							</div>
 							<div class="flex-group">
-								<button type="button" class="secondary" id="countdown-grid-add">Add Item</button>
+								<button type="button" class="secondary" id="countdown-grid-add">添加项目</button>
 							</div>
 						</div>
 						<div class="template-list" id="countdown-grid-items"></div>
@@ -126,28 +126,28 @@
 			<div class="panel-tab-content" id="todo-template-panel">
 				<div class="template-panel">
 					<div class="template-header">
-						<strong>Todo Tasks</strong>
-						<span>Create a clean todo board and render it onto the current canvas</span>
+						<strong>待办任务</strong>
+						<span>创建简洁的待办清单并渲染到当前画布</span>
 					</div>
 					<div class="flex-container">
 						<div class="flex-group">
-							<label for="todo-template-title">Title:</label>
-							<input type="text" id="todo-template-title" value="Today's Focus">
-							<button type="button" class="secondary" id="apply-todo-template">Render to Canvas</button>
+							<label for="todo-template-title">标题:</label>
+							<input type="text" id="todo-template-title" value="今日重点">
+							<button type="button" class="secondary" id="apply-todo-template">渲染到画布</button>
 						</div>
 						<div class="flex-group right">
 							<input type="file" id="todo-import-file" accept=".json,application/json" hidden>
-							<button type="button" class="secondary" id="import-todo-template">Import</button>
-							<button type="button" class="secondary" id="export-todo-template">Export</button>
+							<button type="button" class="secondary" id="import-todo-template">导入</button>
+							<button type="button" class="secondary" id="export-todo-template">导出</button>
 						</div>
 					</div>
 					<div class="flex-container">
 						<div class="flex-group">
-							<label for="todo-template-note">Note:</label>
-							<input type="text" id="todo-template-note" value="One step at a time">
+							<label for="todo-template-note">备注:</label>
+							<input type="text" id="todo-template-note" value="一次做好一件事">
 						</div>
 						<div class="flex-group">
-							<button type="button" class="secondary" id="todo-list-add">Add Task</button>
+							<button type="button" class="secondary" id="todo-list-add">添加任务</button>
 						</div>
 					</div>
 					<div class="template-list" id="todo-list-items"></div>
