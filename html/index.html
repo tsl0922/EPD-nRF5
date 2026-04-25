@@ -65,6 +65,7 @@
 			<div class="panel-tabs" id="image-source-tabs">
 				<button type="button" class="panel-tab active" data-tab-target="image-upload-panel">Image Upload</button>
 				<button type="button" class="panel-tab" data-tab-target="countdown-template-panel">Countdown Templates</button>
+				<button type="button" class="panel-tab" data-tab-target="todo-template-panel">Todo Tasks</button>
 			</div>
 			<div class="panel-tab-content active" id="image-upload-panel">
 				<div class="flex-container">
@@ -120,6 +121,36 @@
 						</div>
 						<div class="template-list" id="countdown-grid-items"></div>
 					</div>
+				</div>
+			</div>
+			<div class="panel-tab-content" id="todo-template-panel">
+				<div class="template-panel">
+					<div class="template-header">
+						<strong>Todo Tasks</strong>
+						<span>Create a clean todo board and render it onto the current canvas</span>
+					</div>
+					<div class="flex-container">
+						<div class="flex-group">
+							<label for="todo-template-title">Title:</label>
+							<input type="text" id="todo-template-title" value="Today's Focus">
+							<button type="button" class="secondary" id="apply-todo-template">Render to Canvas</button>
+						</div>
+						<div class="flex-group right">
+							<input type="file" id="todo-import-file" accept=".json,application/json" hidden>
+							<button type="button" class="secondary" id="import-todo-template">Import</button>
+							<button type="button" class="secondary" id="export-todo-template">Export</button>
+						</div>
+					</div>
+					<div class="flex-container">
+						<div class="flex-group">
+							<label for="todo-template-note">Note:</label>
+							<input type="text" id="todo-template-note" value="One step at a time">
+						</div>
+						<div class="flex-group">
+							<button type="button" class="secondary" id="todo-list-add">Add Task</button>
+						</div>
+					</div>
+					<div class="template-list" id="todo-list-items"></div>
 				</div>
 			</div>
 			<div class="flex-container options">

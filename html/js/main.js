@@ -55,6 +55,8 @@ const canvasSizes = [
 
 const countdownStorageKey = 'epdCountdownTemplates';
 const countdownImportVersion = 1;
+const todoStorageKey = 'epdTodoTemplates';
+const todoImportVersion = 1;
 const defaultCountdownState = {
   mode: 'single',
   single: {
@@ -71,6 +73,16 @@ const defaultCountdownState = {
   }
 };
 let countdownState = null;
+const defaultTodoState = {
+  title: "Today's Focus",
+  note: 'One step at a time',
+  items: [
+    { text: 'Check status', done: false, important: true },
+    { text: 'Finish one key task', done: false, important: false },
+    { text: 'Review before sleep', done: true, important: false }
+  ]
+};
+let todoState = null;
 
 function getTodayISODate() {
   return new Date().toISOString().split('T')[0];
@@ -78,6 +90,10 @@ function getTodayISODate() {
 
 function cloneDefaultCountdownState() {
   return JSON.parse(JSON.stringify(defaultCountdownState));
+}
+
+function cloneDefaultTodoState() {
+  return JSON.parse(JSON.stringify(defaultTodoState));
 }
 
 function normalizeCountdownState(state) {
@@ -104,6 +120,23 @@ function normalizeCountdownState(state) {
   return normalized;
 }
 
+function normalizeTodoState(state) {
+  const normalized = cloneDefaultTodoState();
+  if (!state || typeof state !== 'object') return normalized;
+
+  normalized.title = state.title || normalized.title;
+  normalized.note = state.note || normalized.note;
+  if (Array.isArray(state.items) && state.items.length > 0) {
+    normalized.items = state.items.map((item) => ({
+      text: item && item.text ? item.text : 'Untitled Task',
+      done: !!(item && item.done),
+      important: !!(item && item.important)
+    }));
+  }
+
+  return normalized;
+}
+
 function loadCountdownState() {
   try {
     countdownState = normalizeCountdownState(JSON.parse(localStorage.getItem(countdownStorageKey)));
@@ -115,6 +148,18 @@ function loadCountdownState() {
 
 function saveCountdownState() {
   localStorage.setItem(countdownStorageKey, JSON.stringify(countdownState));
+}
+
+function loadTodoState() {
+  try {
+    todoState = normalizeTodoState(JSON.parse(localStorage.getItem(todoStorageKey)));
+  } catch (e) {
+    todoState = cloneDefaultTodoState();
+  }
+}
+
+function saveTodoState() {
+  localStorage.setItem(todoStorageKey, JSON.stringify(todoState));
 }
 
 function getCountdownDays(targetDate) {
@@ -593,7 +638,7 @@ function syncCountdownFormToState() {
   countdownState.single.label = document.getElementById('countdown-single-label').value.trim() || 'Target';
   countdownState.single.date = document.getElementById('countdown-single-date').value || getTodayISODate();
   countdownState.grid.title = document.getElementById('countdown-grid-title').value.trim() || 'Countdown Board';
-  countdownState.grid.items = Array.from(document.querySelectorAll('.template-item')).map((item) => ({
+  countdownState.grid.items = Array.from(document.querySelectorAll('#countdown-grid-items .template-item')).map((item) => ({
     name: item.querySelector('.countdown-grid-name').value.trim() || 'Untitled',
     date: item.querySelector('.countdown-grid-date').value || getTodayISODate(),
     important: item.querySelector('.countdown-grid-important').checked
@@ -657,6 +702,54 @@ function refreshCountdownTemplateUI() {
   updateCountdownModeUI();
 }
 
+function syncTodoFormToState() {
+  todoState.title = document.getElementById('todo-template-title').value.trim() || "Today's Focus";
+  todoState.note = document.getElementById('todo-template-note').value.trim() || 'One step at a time';
+  todoState.items = Array.from(document.querySelectorAll('#todo-list-items .template-item')).map((item) => ({
+    text: item.querySelector('.todo-item-text').value.trim() || 'Untitled Task',
+    done: item.querySelector('.todo-item-done').checked,
+    important: item.querySelector('.todo-item-important').checked
+  }));
+  if (todoState.items.length === 0) {
+    todoState.items.push({ text: 'Untitled Task', done: false, important: false });
+  }
+}
+
+function syncTodoStateToForm() {
+  document.getElementById('todo-template-title').value = todoState.title;
+  document.getElementById('todo-template-note').value = todoState.note;
+}
+
+function renderTodoItems() {
+  const container = document.getElementById('todo-list-items');
+  container.innerHTML = '';
+
+  todoState.items.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'template-item';
+    row.innerHTML = `
+      <input type="text" class="todo-item-text" value="${escapeHtml(item.text)}">
+      <label><input type="checkbox" class="todo-item-done" ${item.done ? 'checked' : ''}> Done</label>
+      <label><input type="checkbox" class="todo-item-important" ${item.important ? 'checked' : ''}> Important</label>
+      <button type="button" class="secondary todo-item-remove">Remove</button>
+    `;
+    row.querySelector('.todo-item-remove').addEventListener('click', () => {
+      todoState.items.splice(index, 1);
+      if (todoState.items.length === 0) {
+        todoState.items.push({ text: 'Untitled Task', done: false, important: false });
+      }
+      renderTodoItems();
+      saveTodoState();
+    });
+    container.appendChild(row);
+  });
+}
+
+function refreshTodoTemplateUI() {
+  syncTodoStateToForm();
+  renderTodoItems();
+}
+
 function exportCountdownTemplate() {
   syncCountdownFormToState();
   saveCountdownState();
@@ -671,6 +764,25 @@ function exportCountdownTemplate() {
   const link = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
   link.download = `countdown-template-${stamp}.json`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function exportTodoTemplate() {
+  syncTodoFormToState();
+  saveTodoState();
+
+  const payload = {
+    version: todoImportVersion,
+    exportedAt: new Date().toISOString(),
+    todo: todoState
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  link.download = `todo-template-${stamp}.json`;
   link.href = URL.createObjectURL(blob);
   link.click();
   URL.revokeObjectURL(link.href);
@@ -693,6 +805,27 @@ function importCountdownTemplate(file) {
     } catch (error) {
       console.error(error);
       alert('导入失败，文件不是有效的倒计时模板 JSON。');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function importTodoTemplate(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const rawData = JSON.parse(reader.result);
+      const importedState = rawData && typeof rawData === 'object' && rawData.todo ? rawData.todo : rawData;
+      todoState = normalizeTodoState(importedState);
+      saveTodoState();
+      refreshTodoTemplateUI();
+      setActivePanelTab('todo-template-panel');
+      addLog('Todo 模板已导入。');
+    } catch (error) {
+      console.error(error);
+      alert('导入失败，文件不是有效的待办模板 JSON。');
     }
   };
   reader.readAsText(file, 'utf-8');
@@ -866,6 +999,89 @@ function drawGridCountdownTemplate() {
   paintManager.saveToHistory();
 }
 
+function drawTodoTemplate() {
+  const scaleX = canvas.width / 400;
+  const scaleY = canvas.height / 300;
+  const scale = Math.min(scaleX, scaleY);
+  const items = todoState.items.slice(0, 12);
+
+  prepareTemplateCanvas();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = Math.max(1, 2 * scale);
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#000000';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.font = `900 ${Math.max(20, 22 * scale)}px Microsoft YaHei`;
+  ctx.fillText(todoState.title || "Today's Focus", 20 * scaleX, 24 * scaleY);
+
+  ctx.textAlign = 'right';
+  ctx.font = `bold ${Math.max(10, 10 * scale)}px Arial`;
+  ctx.fillText(formatCountdownDate(), canvas.width - 12 * scaleX, 20 * scaleY);
+
+  ctx.fillStyle = '#FF0000';
+  ctx.fillRect(12 * scaleX, 36 * scaleY, canvas.width - 24 * scaleX, Math.max(2, 3 * scale));
+
+  const note = todoState.note || 'One step at a time';
+  ctx.fillStyle = '#555555';
+  ctx.textAlign = 'left';
+  ctx.font = `bold ${Math.max(11, 12 * scale)}px Microsoft YaHei`;
+  ctx.fillText(note, 20 * scaleX, 52 * scaleY);
+
+  const startY = 78 * scaleY;
+  const rowGap = Math.max(18 * scaleY, 24 * scale);
+  const boxSize = Math.max(12, 16 * scale);
+
+  items.forEach((item, index) => {
+    const y = startY + index * rowGap;
+    if (y > canvas.height - 18 * scaleY) return;
+
+    ctx.lineWidth = Math.max(1, 2 * scale);
+    ctx.strokeStyle = item.important ? '#FF0000' : '#000000';
+    ctx.strokeRect(20 * scaleX, y - boxSize / 2, boxSize, boxSize);
+
+    if (item.done) {
+      ctx.strokeStyle = '#000000';
+      ctx.beginPath();
+      ctx.moveTo(24 * scaleX, y);
+      ctx.lineTo(28 * scaleX, y + 5 * scaleY);
+      ctx.lineTo(36 * scaleX, y - 6 * scaleY);
+      ctx.stroke();
+    }
+
+    if (item.important) {
+      ctx.fillStyle = '#FF0000';
+      ctx.beginPath();
+      ctx.arc(50 * scaleX, y, Math.max(2, 2.5 * scale), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const textX = item.important ? 60 * scaleX : 52 * scaleX;
+    const maxWidth = canvas.width - textX - 18 * scaleX;
+    const fontSize = fitText(ctx, item.text, maxWidth, 16 * scale, 10 * scale, 'Microsoft YaHei', item.done ? 'normal' : 'bold');
+    ctx.font = `${item.done ? 'normal' : 'bold'} ${fontSize}px Microsoft YaHei`;
+    ctx.fillStyle = item.done ? '#777777' : '#000000';
+    ctx.textAlign = 'left';
+    ctx.fillText(item.text, textX, y);
+
+    if (item.done) {
+      const textWidth = Math.min(ctx.measureText(item.text).width, maxWidth);
+      ctx.strokeStyle = '#777777';
+      ctx.lineWidth = Math.max(1, 1.5 * scale);
+      ctx.beginPath();
+      ctx.moveTo(textX, y);
+      ctx.lineTo(textX + textWidth, y);
+      ctx.stroke();
+    }
+  });
+
+  paintManager.saveToHistory();
+}
+
 function applyCountdownTemplate() {
   syncCountdownFormToState();
   saveCountdownState();
@@ -874,6 +1090,15 @@ function applyCountdownTemplate() {
   activeCanvasPreset = 'countdown';
   if (countdownState.mode === 'grid') drawGridCountdownTemplate();
   else drawSingleCountdownTemplate();
+}
+
+function applyTodoTemplate() {
+  syncTodoFormToState();
+  saveTodoState();
+  document.getElementById('imageFile').value = '';
+  setActivePanelTab('todo-template-panel');
+  activeCanvasPreset = 'todo';
+  drawTodoTemplate();
 }
 
 function renderCanvasSource() {
@@ -886,6 +1111,11 @@ function renderCanvasSource() {
 
   if (activeCanvasPreset === 'countdown') {
     applyCountdownTemplate();
+    return;
+  }
+
+  if (activeCanvasPreset === 'todo') {
+    applyTodoTemplate();
     return;
   }
 
@@ -947,6 +1177,43 @@ function initCountdownTemplate() {
   });
   document.getElementById('countdown-import-file').addEventListener('change', (event) => {
     importCountdownTemplate(event.target.files[0]);
+    event.target.value = '';
+  });
+}
+
+function initTodoTemplate() {
+  loadTodoState();
+  refreshTodoTemplateUI();
+
+  document.getElementById('todo-template-title').addEventListener('input', () => {
+    syncTodoFormToState();
+    saveTodoState();
+  });
+  document.getElementById('todo-template-note').addEventListener('input', () => {
+    syncTodoFormToState();
+    saveTodoState();
+  });
+  document.getElementById('todo-list-add').addEventListener('click', () => {
+    syncTodoFormToState();
+    todoState.items.push({ text: `Task ${todoState.items.length + 1}`, done: false, important: false });
+    renderTodoItems();
+    saveTodoState();
+  });
+  document.getElementById('todo-list-items').addEventListener('input', () => {
+    syncTodoFormToState();
+    saveTodoState();
+  });
+  document.getElementById('apply-todo-template').addEventListener('click', () => {
+    applyTodoTemplate();
+  });
+  document.getElementById('import-todo-template').addEventListener('click', () => {
+    document.getElementById('todo-import-file').click();
+  });
+  document.getElementById('export-todo-template').addEventListener('click', () => {
+    exportTodoTemplate();
+  });
+  document.getElementById('todo-import-file').addEventListener('change', (event) => {
+    importTodoTemplate(event.target.files[0]);
     event.target.value = '';
   });
 }
@@ -1110,6 +1377,7 @@ document.body.onload = () => {
   paintManager.initPaintTools();
   cropManager.initCropTools();
   initCountdownTemplate();
+  initTodoTemplate();
   initEventHandlers();
   updateButtonStatus();
   checkDebugMode();
