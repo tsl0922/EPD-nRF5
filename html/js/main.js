@@ -54,6 +54,7 @@ const canvasSizes = [
 ];
 
 const countdownStorageKey = 'epdCountdownTemplates';
+const countdownImportVersion = 1;
 const defaultCountdownState = {
   mode: 'single',
   single: {
@@ -610,6 +611,15 @@ function syncCountdownStateToForm() {
   document.getElementById('countdown-grid-title').value = countdownState.grid.title;
 }
 
+function setActivePanelTab(targetId) {
+  document.querySelectorAll('.panel-tab').forEach((button) => {
+    button.classList.toggle('active', button.dataset.tabTarget === targetId);
+  });
+  document.querySelectorAll('.panel-tab-content').forEach((panel) => {
+    panel.classList.toggle('active', panel.id === targetId);
+  });
+}
+
 function renderCountdownGridItems() {
   const container = document.getElementById('countdown-grid-items');
   container.innerHTML = '';
@@ -639,6 +649,53 @@ function updateCountdownModeUI() {
   const mode = document.getElementById('countdown-template-mode').value;
   document.getElementById('countdown-single-panel').style.display = mode === 'single' ? 'block' : 'none';
   document.getElementById('countdown-grid-panel').style.display = mode === 'grid' ? 'block' : 'none';
+}
+
+function refreshCountdownTemplateUI() {
+  syncCountdownStateToForm();
+  renderCountdownGridItems();
+  updateCountdownModeUI();
+}
+
+function exportCountdownTemplate() {
+  syncCountdownFormToState();
+  saveCountdownState();
+
+  const payload = {
+    version: countdownImportVersion,
+    exportedAt: new Date().toISOString(),
+    countdown: countdownState
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  link.download = `countdown-template-${stamp}.json`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function importCountdownTemplate(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const rawData = JSON.parse(reader.result);
+      const importedState = rawData && typeof rawData === 'object' && rawData.countdown ? rawData.countdown : rawData;
+      countdownState = normalizeCountdownState(importedState);
+      if (!countdownState.single.date) countdownState.single.date = getTodayISODate();
+      saveCountdownState();
+      refreshCountdownTemplateUI();
+      setActivePanelTab('countdown-template-panel');
+      addLog('Countdown 模板已导入。');
+    } catch (error) {
+      console.error(error);
+      alert('导入失败，文件不是有效的倒计时模板 JSON。');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
 }
 
 function prepareTemplateCanvas() {
@@ -813,6 +870,7 @@ function applyCountdownTemplate() {
   syncCountdownFormToState();
   saveCountdownState();
   document.getElementById('imageFile').value = '';
+  setActivePanelTab('countdown-template-panel');
   activeCanvasPreset = 'countdown';
   if (countdownState.mode === 'grid') drawGridCountdownTemplate();
   else drawSingleCountdownTemplate();
@@ -839,9 +897,13 @@ function renderCanvasSource() {
 
 function initCountdownTemplate() {
   loadCountdownState();
-  syncCountdownStateToForm();
-  renderCountdownGridItems();
-  updateCountdownModeUI();
+  refreshCountdownTemplateUI();
+
+  document.querySelectorAll('.panel-tab').forEach((button) => {
+    button.addEventListener('click', () => {
+      setActivePanelTab(button.dataset.tabTarget);
+    });
+  });
 
   document.getElementById('countdown-template-mode').addEventListener('change', () => {
     syncCountdownFormToState();
@@ -877,6 +939,16 @@ function initCountdownTemplate() {
   document.getElementById('apply-countdown-template').addEventListener('click', () => {
     applyCountdownTemplate();
   });
+  document.getElementById('import-countdown-template').addEventListener('click', () => {
+    document.getElementById('countdown-import-file').click();
+  });
+  document.getElementById('export-countdown-template').addEventListener('click', () => {
+    exportCountdownTemplate();
+  });
+  document.getElementById('countdown-import-file').addEventListener('change', (event) => {
+    importCountdownTemplate(event.target.files[0]);
+    event.target.value = '';
+  });
 }
 
 function updateImage() {
@@ -886,6 +958,7 @@ function updateImage() {
     return;
   }
   activeCanvasPreset = null;
+  setActivePanelTab('image-upload-panel');
 
   const image = new Image();
   image.onload = function () {

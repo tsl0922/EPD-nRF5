@@ -256,6 +256,38 @@ label {
     margin-bottom: 10px;
 }
 
+.panel-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.panel-tab {
+    color: #495057;
+    background: #eef2f6;
+    border-color: #d0d7de;
+}
+
+.panel-tab:hover {
+    background: #dde5ee;
+    border-color: #c1c9d2;
+}
+
+.panel-tab.active {
+    color: #fff;
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.panel-tab-content {
+    display: none;
+}
+
+.panel-tab-content.active {
+    display: block;
+}
+
 .template-header {
     display: flex;
     flex-wrap: wrap;
@@ -398,6 +430,15 @@ canvas.text-placement-mode {
 @media (max-width: 768px) {
     .flex-container {
         flex-direction: column;
+    }
+
+    .panel-tabs {
+        flex-direction: row;
+    }
+
+    .panel-tab {
+        flex: 1 1 0;
+        text-align: center;
     }
 
     .flex-container.options .flex-group label {
@@ -554,6 +595,23 @@ body.dark-mode .template-panel,
 body.dark-mode .template-item {
     background-color: var(--dark-fieldset-bg);
     border-color: var(--dark-border);
+}
+
+body.dark-mode .panel-tab {
+    color: var(--dark-text);
+    background-color: #2a2a2a;
+    border-color: var(--dark-border);
+}
+
+body.dark-mode .panel-tab:hover {
+    background-color: #333;
+    border-color: #444;
+}
+
+body.dark-mode .panel-tab.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-hover);
+    color: #fff;
 }
 
 body.dark-mode .template-header span {
