@@ -1,27 +1,48 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>墨水屏日历</title>
+	<title>墨水屏日历 & 蓝牙控制台</title>
 	<link rel="shortcut icon" type="image/png" href="favicon.png">
 	<link rel="stylesheet" href="css/main.css?v=20251109">
 </head>
 
 <body>
 	<div class="main">
-		<h3>墨水屏日历</h3>
+		<!-- Header Navbar -->
+		<header class="app-header">
+			<div class="app-title-group">
+				<div class="app-icon">
+					<svg viewBox="0 0 24 24">
+						<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 5h2v5h-2z"/>
+					</svg>
+				</div>
+				<div>
+					<h3 class="app-title">墨水屏日历</h3>
+				</div>
+			</div>
+			<div class="app-badge">
+				<span class="status-dot"></span>
+				<span id="header-status-text">蓝牙状态: 待连接</span>
+			</div>
+		</header>
+
+		<!-- Card 1: 蓝牙连接 -->
 		<fieldset>
-			<legend>蓝牙连接</legend>
+			<legend>
+				<svg viewBox="0 0 24 24"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg>
+				蓝牙连接
+			</legend>
 			<div class="flex-container">
 				<div class="flex-group">
-					<button id="connectbutton" type="button" class="primary" onclick="preConnect()">连接</button>
-					<button id="reconnectbutton" type="button" class="secondary" onclick="reConnect()">重连</button>
+					<button id="connectbutton" type="button" class="primary" onclick="preConnect()">连接设备</button>
+					<button id="reconnectbutton" type="button" class="secondary" onclick="reConnect()">重新连接</button>
 					<button type="button" class="secondary" onclick="clearLog()">清空日志</button>
 				</div>
 				<div class="flex-group right debug">
-					<label for="epddriver">驱动</label>
+					<label for="epddriver">驱动型号</label>
 					<select id="epddriver" onchange="updateDitcherOptions()">
 						<option value="01" data-color="blackWhiteColor" data-size="4.2_400_300">4.2寸 (黑白, UC8176)</option>
 						<option value="03" data-color="threeColor" data-size="4.2_400_300">4.2寸 (三色, UC8176)</option>
@@ -46,8 +67,13 @@
 			</div>
 			<div class="log-container" id="log"></div>
 		</fieldset>
+
+		<!-- Card 2: 设备控制 -->
 		<fieldset>
-			<legend>设备控制</legend>
+			<legend>
+				<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+				设备控制
+			</legend>
 			<div class="flex-container">
 				<div class="flex-group">
 					<button id="calendarmodebutton" type="button" class="primary" onclick="syncTime(1)">日历模式</button>
@@ -55,16 +81,23 @@
 					<button id="clearscreenbutton" type="button" class="secondary" onclick="clearScreen()">清除屏幕</button>
 				</div>
 				<div class="flex-group right debug">
-					<input type="text" id="cmdTXT" value="">
+					<input type="text" id="cmdTXT" value="" placeholder="自定义命令">
 					<button id="sendcmdbutton" type="button" class="primary" onclick="sendcmd()">发送命令</button>
 				</div>
 			</div>
 		</fieldset>
+
+		<!-- Card 3: 蓝牙传图与画板 -->
 		<fieldset>
-			<legend>蓝牙传图</legend>
+			<legend>
+				<svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+				蓝牙传图 & 工作台
+			</legend>
+			
 			<div class="flex-container">
 				<input type="file" id="imageFile" accept=".png,.jpg,.bmp,.webp,.jpeg" onchange="updateImage()">
 			</div>
+
 			<div class="flex-container options">
 				<div class="flex-group debug">
 					<label for="canvasSize">画布尺寸:</label>
@@ -128,26 +161,34 @@
 					<label id="ditherContrastValue">1.2</label>
 				</div>
 			</div>
-			<div class="flex-container options">
-				<div class="flex-group debug">
+
+			<div class="flex-container options debug">
+				<div class="flex-group">
 					<label for="mtusize">MTU:</label>
 					<input type="number" id="mtusize" value="20" min="0" max="255">
 					<label for="interleavedcount">确认间隔:</label>
 					<input type="number" id="interleavedcount" value="50" min="0" max="500">
 				</div>
 			</div>
+
 			<div class="status-bar"><b>状态：</b><span id="status"></span></div>
+
 			<div class="flex-container">
 				<div class="flex-group">
 					<button type="button" class="secondary debug" onclick="rotateCanvas()">旋转画布</button>
 					<button type="button" class="secondary" onclick="clearCanvas()">清除画布</button>
 					<button type="button" class="secondary debug" onclick="downloadDataArray()">下载数组</button>
-					<button id="sendimgbutton" type="button" class="primary" onclick="sendimg()">发送图片</button>
+					<button id="sendimgbutton" type="button" class="primary" onclick="sendimg()">发送图片至墨水屏</button>
 				</div>
 			</div>
+
+			<!-- Canvas Editor Wrapper -->
 			<div class="canvas-container">
 				<div class="canvas-title"></div>
-				<canvas id="canvas" width="400" height="300"></canvas>
+				<div class="canvas-wrapper">
+					<canvas id="canvas" width="400" height="300"></canvas>
+				</div>
+				
 				<div class="flex-container canvas-tools">
 					<div class="flex-group tool-buttons">
 						<button id="brush-mode" title="画笔" class="tool-button">✏️</button>
@@ -157,6 +198,7 @@
 						<button id="redo-btn" title="重做 (Ctrl+Y)" class="tool-button hide">↷</button>
 					</div>
 				</div>
+
 				<div class="flex-container canvas-tools">
 					<div class="flex-group brush-tools">
 						<label for="brush-color">颜色:</label>
@@ -169,9 +211,10 @@
 							<option value="#FFFFFF">白色</option>
 						</select>
 						<label for="brush-size">粗细:</label>
-						<input type="number" id="brush-size" value="2" min="1" max="100">
+						<input type="number" id="brush-size" value="2" min="1" max="100" style="width: 70px;">
 					</div>
 				</div>
+
 				<div class="flex-container canvas-tools">
 					<div class="flex-group text-tools">
 						<label for="font-family">字体:</label>
@@ -204,13 +247,12 @@
 							<option value="Source Han Sans CN">思源黑体</option>
 							<option value="Source Han Serif SC">思源宋体</option>
 							<option value="WenQuanYi Micro Hei">文泉驿微米黑</option>
-							</optgroup>
 						</select>
 						<label for="font-size">大小:</label>
-						<input type="number" id="font-size" value="16" min="1" max="100">
+						<input type="number" id="font-size" value="16" min="1" max="100" style="width: 70px;">
 					</div>
 					<div class="flex-group text-tools">
-						<input type="text" id="text-input" placeholder="输入文字" style="width:150px">
+						<input type="text" id="text-input" placeholder="输入文字" style="width:160px">
 						<button id="text-bold" title="粗体">B</button>
 						<button id="text-italic" title="斜体">I</button>
 						<button id="add-text-btn" class="primary">添加文字</button>
@@ -222,20 +264,24 @@
 						<button id="crop-move-up" title="上移">⇧</button>
 						<button id="crop-move-down" title="下移">⇩</button>
 						<button id="crop-move-right" title="右移">⇨</button>
-						<button class="primary" onclick="applyDither()">完成</button>
+						<button class="primary" onclick="applyDither()">完成裁剪</button>
 					</div>
 				</div>
 			</div>
 		</fieldset>
-		<div class="footer">
+
+		<!-- Footer -->
+		<footer class="footer">
 			<span class="copy">&copy; 2025 tsl0922.</span>
 			<span class="links">
-				<a href="https://github.com/tsl0922/EPD-nRF5">Github</a>
+				<a href="https://github.com/tsl0922/EPD-nRF5" target="_blank" rel="noopener">Github</a>
 				<a href="https://qm.qq.com/q/SckzhfDxuu" onclick="return confirm('本群是此开源固件作者的技术交流群\n如果你购买了成品，请找卖家提供售后！')">交流群</a>
 				<a href="?debug=true" id="debug-toggle">开发模式</a>
 			</span>
-		</div>
+		</footer>
 	</div>
+
+	<!-- Scripts -->
 	<script type="text/javascript" src="js/dithering.js?v=20251109"></script>
 	<script type="text/javascript" src="js/paint.js?v=20251109"></script>
 	<script type="text/javascript" src="js/crop.js?v=20251109"></script>
