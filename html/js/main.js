@@ -315,6 +315,16 @@ function updateButtonStatus(forceDisabled = false) {
   document.getElementById("clearscreenbutton").disabled = status;
   document.getElementById("sendimgbutton").disabled = status;
   document.getElementById("setDriverbutton").disabled = status;
+
+  const headerStatusText = document.getElementById("header-status-text");
+  const statusDot = document.querySelector(".status-dot");
+  if (headerStatusText) {
+    headerStatusText.innerText = connected ? '蓝牙状态: 已连接' : '蓝牙状态: 未连接';
+  }
+  if (statusDot) {
+    if (connected) statusDot.classList.add('active');
+    else statusDot.classList.remove('active');
+  }
 }
 
 function disconnect() {
