@@ -31,6 +31,30 @@
 // #define EPD_CFG_DEFAULT {0x05, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01, 0x07}
 #endif
 
+static uint32_t rle_decompress_from(const uint8_t* src, uint32_t src_len, uint32_t* src_pos, uint8_t* dst,
+                                    uint32_t dst_len) {
+    uint32_t dst_pos = 0;
+    while (*src_pos < src_len && dst_pos < dst_len) {
+        uint8_t control = src[*src_pos];  // peek, don't consume yet
+        if (control & 0x80) {             // repeat run
+            uint32_t count = (control & 0x7F) + 3;
+            if (*src_pos + 1 >= src_len) break;    // need value byte
+            if (dst_pos + count > dst_len) break;  // won't fit — retry later
+            (*src_pos)++;                          // consume control
+            (*src_pos)++;                          // consume value
+            uint8_t value = src[*src_pos - 1];
+            for (uint32_t j = 0; j < count; j++) dst[dst_pos++] = value;
+        } else {  // literal run
+            uint32_t count = control + 1;
+            if (*src_pos + 1 + count > src_len) break;  // need all literal bytes
+            if (dst_pos + count > dst_len) break;       // won't fit — retry later
+            (*src_pos)++;                               // consume control
+            for (uint32_t j = 0; j < count; j++) dst[dst_pos++] = src[(*src_pos)++];
+        }
+    }
+    return dst_pos;
+}
+
 static void epd_gui_update(void* p_event_data, uint16_t event_size) {
     epd_gui_update_event_t* event = (epd_gui_update_event_t*)p_event_data;
     ble_epd_t* p_epd = event->p_epd;
@@ -100,8 +124,8 @@ static void epd_send_time(ble_epd_t* p_epd) {
 }
 
 static void epd_send_mtu(ble_epd_t* p_epd) {
-    char buf[10] = {0};
-    snprintf(buf, sizeof(buf), "mtu=%d", p_epd->max_data_len);
+    char buf[20] = {0};
+    snprintf(buf, sizeof(buf), "mtu=%d rle=1", p_epd->max_data_len);
     ble_epd_string_send(p_epd, (uint8_t*)buf, strlen(buf));
 }
 
@@ -186,10 +210,30 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             }
             break;
 
-        case EPD_CMD_WRITE_IMAGE:  // MSB=0000: ram begin, LSB=1111: black
+        case EPD_CMD_WRITE_IMAGE: {
             if (length < 3) return;
-            if (p_epd->epd) p_epd->epd->drv->write_ram(p_epd->epd, p_data[1], &p_data[2], length - 2);
-            break;
+
+            // BIT 0: black/red, BIT 1: begin, BIT 2: rle
+            bool black = (p_data[1] & 0x01) == 0;
+            bool begin = (p_data[1] & 0x02) != 0;
+            bool rle = (p_data[1] & 0x04) != 0;
+
+            uint16_t data_len = length - 2;
+            uint8_t rle_out[UINT8_MAX];
+            uint32_t src_pos = 0;
+
+            if (rle) {
+                while (src_pos < data_len) {
+                    app_feed_wdt();
+                    uint32_t out_len = rle_decompress_from(&p_data[2], data_len, &src_pos, rle_out, sizeof(rle_out));
+                    if (out_len == 0) break;
+                    if (p_epd->epd) p_epd->epd->drv->write_ram(p_epd->epd, begin, black, rle_out, (uint16_t)out_len);
+                    begin = false;
+                }
+            } else {
+                if (p_epd->epd) p_epd->epd->drv->write_ram(p_epd->epd, begin, black, &p_data[2], data_len);
+            }
+        } break;
 
         case EPD_CMD_SET_CONFIG:
             if (length < 2) return;

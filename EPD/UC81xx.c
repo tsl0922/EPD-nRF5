@@ -247,9 +247,7 @@ void UC81xx_WriteImage(epd_model_t* epd, uint8_t* black, uint8_t* color, uint16_
     }
 }
 
-void UC81xx_WriteRam(epd_model_t* epd, uint8_t cfg, uint8_t* data, uint8_t len) {
-    bool begin = (cfg >> 4) == 0x00;
-    bool black = (cfg & 0x0F) == 0x0F;
+void UC81xx_WriteRam(epd_model_t* epd, bool begin, bool black, uint8_t* data, uint8_t len) {
     if (begin && black) UC81xx_SetWindow(epd, 0, 0, epd->width, epd->height);
     switch (epd->ic) {
         case DRV_IC_UC8159:

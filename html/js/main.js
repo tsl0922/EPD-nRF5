@@ -3,6 +3,7 @@ let epdService, epdCharacteristic;
 let startTime, msgIndex, appVersion;
 let canvas, ctx, textDecoder;
 let paintManager, cropManager;
+let rleSupport;
 
 const EpdCmd = {
   SET_PINS: 0x00,
@@ -75,6 +76,7 @@ function resetVariables() {
   epdService = null;
   epdCharacteristic = null;
   msgIndex = 0;
+  rleSupport = false;
   document.getElementById("log").value = '';
 }
 
@@ -106,16 +108,38 @@ async function write(cmd, data, withResponse = true) {
 async function writeImage(data, step = 'bw') {
   const chunkSize = document.getElementById('mtusize').value - 2;
   const interleavedCount = document.getElementById('interleavedcount').value;
-  const count = Math.round(data.length / chunkSize);
-  let chunkIdx = 0;
   let noReplyCount = interleavedCount;
+  let totalRleLength = 0;
+  const stepText = step === 'bw' ? '数据块' : '红色块';
 
-  for (let i = 0; i < data.length; i += chunkSize) {
-    let currentTime = (new Date().getTime() - startTime) / 1000.0;
-    setStatus(`${step == 'bw' ? '黑白' : '颜色'}块: ${chunkIdx + 1}/${count + 1}, 总用时: ${currentTime}s`);
+  // Use RLE only when its complete encoded stream is smaller than the
+  // original data. Each RLE chunk contains complete codes.
+  const rleChunks = rleSupport ? rleCompressMTU(data, chunkSize) : null;
+  const rleLength = rleChunks ? rleChunks.reduce((total, chunk) => total + chunk.length, 0) : data.length;
+  const useRle = rleSupport && rleLength < data.length;
+  const totalChunks = useRle ? rleChunks.length : Math.ceil(data.length / chunkSize);
+
+  for (let i = 0; i < totalChunks; i++) {
+    let chunk;
+    if (useRle) {
+      chunk = rleChunks[i];
+      totalRleLength += chunk.length;
+    } else {
+      const off = i * chunkSize;
+      chunk = data.slice(off, off + chunkSize);
+    }
+
+    const currentTime = (new Date().getTime() - startTime) / 1000.0;
+    setStatus(`${stepText}: ${i + 1}/${totalChunks}, 总用时: ${currentTime}s`);
+
     const payload = [
-      (step == 'bw' ? 0x0F : 0x00) | (i == 0 ? 0x00 : 0xF0),
-      ...data.slice(i, i + chunkSize),
+      rleSupport
+        ?
+        (step === 'bw' ? 0x00 : 0x01) | (i === 0 ? 0x02 : 0x00) | (useRle ? 0x04 : 0x00)
+        :
+        (step === 'bw' ? 0x0F : 0x00) | (i === 0 ? 0x00 : 0xF0)
+      ,
+      ...chunk,
     ];
     if (noReplyCount > 0) {
       await write(EpdCmd.WRITE_IMG, payload, false);
@@ -124,7 +148,6 @@ async function writeImage(data, step = 'bw') {
       await write(EpdCmd.WRITE_IMG, payload, true);
       noReplyCount = interleavedCount;
     }
-    chunkIdx++;
   }
 }
 
@@ -378,6 +401,10 @@ function handleNotify(value, idx) {
       const mtuSize = parseInt(msg.substring(4));
       document.getElementById('mtusize').value = mtuSize;
       addLog(`MTU 已更新为: ${mtuSize}`);
+      if (msg.includes('rle=1')) {
+        rleSupport = true;
+        addLog('已开启 RLE 压缩传输支持');
+      }
     } else if (msg.startsWith('t=') && msg.length > 2) {
       const t = parseInt(msg.substring(2)) + new Date().getTimezoneOffset() * 60;
       addLog(`远端时间: ${new Date(t * 1000).toLocaleString()}`);
