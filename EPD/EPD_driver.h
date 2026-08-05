@@ -131,19 +131,23 @@ typedef enum {
 
 // Do not change the existing IDs!
 typedef enum {
-    UC8176_420_BW = 1,
-    UC8176_420_BWR = 3,
-    SSD1619_420_BWR = 2,
-    SSD1619_420_BW = 4,
-    JD79668_420_BWRY = 5,
-    UC8179_750_BW = 6,
-    UC8179_750_BWR = 7,
-    UC8159_750_LOW_BW = 8,
-    UC8159_750_LOW_BWR = 9,
-    SSD1677_750_HD_BW = 10,
-    SSD1677_750_HD_BWR = 11,
-    JD79665_750_BWRY = 12,
-    JD79665_583_BWRY = 13,
+    UC8176_420_BW = 0x01,
+    UC8176_420_BWR = 0x03,
+    SSD1619_420_BWR = 0x02,
+    SSD1619_420_BW = 0x04,
+    JD79668_420_BWRY = 0x05,
+    UC8179_750_BW = 0x06,
+    UC8179_750_BWR = 0x07,
+    UC8159_750_LOW_BW = 0x08,
+    UC8159_750_LOW_BWR = 0x09,
+    SSD1677_750_HD_BW = 0x0a,
+    SSD1677_750_HD_BWR = 0x0b,
+    JD79665_750_BWRY = 0x0c,
+    JD79665_583_BWRY = 0x0d,
+    UC8159_583_LOW_BWR = 0x0e,
+    UC8159_583_LOW_BW = 0x0f,
+    UC8179_583_BWR = 0x10,
+    UC8179_583_BW = 0x11,
 } epd_model_id_t;
 
 struct epd_driver;
