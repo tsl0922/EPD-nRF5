@@ -74,6 +74,27 @@ function labDistance(lab1, lab2) {
   return Math.sqrt(0.2 * dl * dl + 3 * da * da + 3 * db * db);
 }
 
+function colorDistance(c1, c2) {
+  return Math.sqrt(
+    Math.pow(c1.r - c2.r, 2) +
+    Math.pow(c1.g - c2.g, 2) +
+    Math.pow(c1.b - c2.b, 2)
+  );
+}
+
+function findNearestColor(pixel, colors) {
+  let nearestColor = colors[0];
+  let minDistance = colorDistance(pixel, colors[0]);
+  for (let i = 1; i < colors.length; i++) {
+    const distance = colorDistance(pixel, colors[i]);
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestColor = colors[i];
+    }
+  }
+  return nearestColor;
+}
+
 function findClosestColor(r, g, b, mode) {
   let palette;
 
@@ -90,16 +111,7 @@ function findClosestColor(r, g, b, mode) {
     return rgbPalette[4]; // 蓝色
   }
 
-  // 三色模式下优先检测红色
-  if (mode === 'threeColor') {
-    // 如果红色通道显著高于绿色和蓝色，且强度足够
-    if (r > 120 && r > g * 1.5 && r > b * 1.5) {
-      return threeColorPalette[2]; // 红色
-    }
-    // 否则根据亮度选择黑或白
-    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-    return luminance < 128 ? threeColorPalette[0] : threeColorPalette[1]; // 黑色或白色
-  }
+  if (mode === 'BWR') return findNearestColor({ r, g, b }, palette);
 
   const inputLab = rgbToLab(r, g, b);
   let minDistance = Infinity;
