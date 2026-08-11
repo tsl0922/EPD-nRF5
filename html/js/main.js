@@ -250,14 +250,14 @@ async function sendimg() {
     const halfLength = Math.floor(processedData.length / 2);
     const blackWhiteData = processedData.slice(0, halfLength);
     const redWhiteData = processedData.slice(halfLength);
-    if (epdDriverSelect.value === '08' || epdDriverSelect.value === '09') {
+    if (['08', '09', '0e', '0f'].includes(epdDriverSelect.value)) {
       await writeImage(convertUC8159(blackWhiteData, redWhiteData), 'bw');
     } else {
       await writeImage(blackWhiteData, 'bw');
       await writeImage(redWhiteData, 'red');
     }
   } else if (ditherMode === 'blackWhiteColor') {
-    if (epdDriverSelect.value === '08' || epdDriverSelect.value === '09') {
+    if (['08', '09', '0e', '0f'].includes(epdDriverSelect.value)) {
       const emptyData = new Uint8Array(processedData.length).fill(0xFF);
       await writeImage(convertUC8159(processedData, emptyData), 'bw');
     } else {
