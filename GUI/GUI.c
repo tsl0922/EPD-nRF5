@@ -158,17 +158,29 @@ static void DrawBattery(Adafruit_GFX* gfx, int16_t x, int16_t y, uint8_t iw, uin
     GFX_fillRect(gfx, x + 2, y + 2, 16 * level / 100, 6, GFX_BLACK);
 }
 
+/* ISO 8601 week number, same result as strftime("%V") but without pulling in
+ * mktime/strftime/tzset from libc (saves ~10 KB of flash with GCC/newlib). */
+static uint8_t IsoWeeksInYear(int y) {
+    int p = (y + y / 4 - y / 100 + y / 400) % 7;
+    int y1 = y - 1;
+    int p1 = (y1 + y1 / 4 - y1 / 100 + y1 / 400) % 7;
+    return (p == 4 || p1 == 3) ? 53 : 52;
+}
+
 static uint8_t GetWeekOfYear(uint8_t year, uint8_t mon, uint8_t mday, uint8_t wday) {
-    struct tm tm = {0};
-    tm.tm_year = year;
-    tm.tm_mon = mon;
-    tm.tm_mday = mday;
-    tm.tm_wday = wday;
-    tm.tm_isdst = -1;
-    mktime(&tm);
-    char buffer[3] = {0};
-    strftime(buffer, 3, "%V", &tm);
-    return atoi(buffer);
+    static const uint16_t days_before[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+    static const uint8_t dow_t[12] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+    int y = year + 1900;
+    int leap = (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0);
+    int yday = days_before[mon] + mday + ((leap && mon > 1) ? 1 : 0); /* 1-based */
+    int yy = y - (mon < 2 ? 1 : 0);
+    int dow = (yy + yy / 4 - yy / 100 + yy / 400 + dow_t[mon] + mday) % 7; /* 0 = Sunday */
+    int isodow = dow == 0 ? 7 : dow;                                       /* 1 = Monday .. 7 = Sunday */
+    int week = (yday - isodow + 10) / 7;
+    (void)wday;
+    if (week < 1) return IsoWeeksInYear(y - 1);
+    if (week > IsoWeeksInYear(y)) return 1;
+    return (uint8_t)week;
 }
 
 static void DrawDateHeader(Adafruit_GFX* gfx, int16_t x, int16_t y, tm_t* tm, struct Lunar_Date* Lunar,

@@ -253,6 +253,12 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
 #endif
             break;
 
+        case EPD_CMD_GET_INFO: {
+            char buf[24] = {0};
+            snprintf(buf, sizeof(buf), "v=%u m=%u", EPD_ReadVoltage(), p_epd->config.display_mode);
+            ble_epd_string_send(p_epd, (uint8_t*)buf, strlen(buf));
+        } break;
+
         case EPD_CMD_CFG_ERASE:
             epd_config_clear(&p_epd->config);
             nrf_delay_ms(100);  // required
